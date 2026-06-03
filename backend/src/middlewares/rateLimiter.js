@@ -16,7 +16,10 @@ const createRateLimiter = (options = {}) => {
   try {
     const redis = getRedisClient();
     store = new RedisStore({
-      sendCommand: (...args) => redis.call(...args),
+      sendCommand: (...args) => Promise.race([
+        redis.call(...args),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis rate-limit timeout')), 2000))
+      ]).catch(() => null),
       prefix,
     });
   } catch (error) {

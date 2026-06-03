@@ -40,7 +40,7 @@ export function AuthProvider({ children }) {
     }
   }, [user])
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       const { data } = await userAPI.getMe()
       setUser(data.data)
@@ -51,7 +51,7 @@ export function AuthProvider({ children }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   const login = useCallback(async (email, password) => {
     const { data } = await authAPI.login({ email, password })
@@ -103,8 +103,9 @@ export function AuthProvider({ children }) {
   const handleOAuthCallback = useCallback(async (accessToken, refreshToken) => {
     localStorage.setItem('accessToken', accessToken)
     localStorage.setItem('refreshToken', refreshToken)
+    localStorage.setItem('lastActiveAt', Date.now().toString())
     await fetchUser()
-  }, [])
+  }, [fetchUser])
 
   const value = {
     user,

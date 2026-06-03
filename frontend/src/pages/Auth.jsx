@@ -228,7 +228,7 @@ export default function Auth({ mode }) {
             </div>
 
             <a
-              href="http://localhost:5000/api/auth/google"
+              href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/google`}
               className="w-full bg-surface-container-low text-on-surface rounded-xl py-4 font-body font-medium text-base hover:bg-surface-container transition-colors flex justify-center items-center gap-3"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

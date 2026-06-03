@@ -5,7 +5,8 @@ let socket = null
 export const connectSocket = (token) => {
   if (socket?.connected) return socket
 
-  socket = io('http://localhost:5000', {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+  socket = io(apiUrl, {
     auth: { token },
     transports: ['websocket', 'polling'],
   })

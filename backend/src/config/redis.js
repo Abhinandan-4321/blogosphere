@@ -5,9 +5,10 @@ let redisClient = null;
 const connectRedis = () => {
   try {
     redisClient = new Redis(process.env.REDIS_URL, {
-      maxRetriesPerRequest: 3,
+      maxRetriesPerRequest: null,
+      enableReadyCheck: false,
       retryStrategy(times) {
-        const delay = Math.min(times * 50, 2000);
+        const delay = Math.min(times * 100, 3000);
         return delay;
       },
     });

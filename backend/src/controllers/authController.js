@@ -246,6 +246,13 @@ export const googleCallback = async (req, res, next) => {
   try {
     const user = req.user;
 
+    if (!user) {
+      console.error("Google OAuth: No user found in request");
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=auth_failed`);
+    }
+
+    console.log("Google OAuth success for user:", user.email);
+
     const tokens = generateTokenPair(user);
 
     try {
@@ -264,7 +271,8 @@ export const googleCallback = async (req, res, next) => {
       `${process.env.CLIENT_URL}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`
     );
   } catch (error) {
-    next(error);
+    console.error("Google OAuth callback error:", error);
+    res.redirect(`${process.env.CLIENT_URL}/login?error=auth_failed`);
   }
 };
 

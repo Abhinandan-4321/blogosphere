@@ -255,18 +255,17 @@ export const googleCallback = async (req, res, next) => {
 
     const tokens = generateTokenPair(user);
 
+    // Fire-and-forget: store refresh token in Redis (don't block redirect)
     try {
       const redis = getRedisClient();
-      await Promise.race([
-        redis.setex(`rt:${user._id}`, 7 * 24 * 60 * 60, tokens.refreshToken),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis timeout')), 3000))
-      ]);
+      redis.setex(`rt:${user._id}`, 7 * 24 * 60 * 60, tokens.refreshToken)
+        .catch(err => console.warn("Redis refresh token store failed:", err.message));
     } catch (redisErr) {
-      console.warn("Redis refresh token store failed:", redisErr.message);
+      console.warn("Redis not available:", redisErr.message);
     }
 
-    // Redirect to frontend with tokens
-    res.redirect(
+    // Redirect to frontend with tokens immediately
+    return res.redirect(
       `${process.env.CLIENT_URL}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`
     );
   } catch (error) {

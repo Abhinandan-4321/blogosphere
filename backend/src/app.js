@@ -16,6 +16,7 @@ import bookmarkRoutes from "./routes/bookmarkRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 
 import errorHandler from "./middlewares/errorHandler.js";
 import { apiLimiter } from "./middlewares/rateLimiter.js";
@@ -65,6 +66,7 @@ app.use("/api/bookmarks", bookmarkRoutes);
 app.use("/api/conversations", chatRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/ai", aiRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

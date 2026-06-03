@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Github, Linkedin, Mail, Clock, Heart } from 'lucide-react'
 import Header from '../components/Header'
+import BuyMeCoffee from '../components/BuyMeCoffee'
 import creatorPhoto from '../../assets/me.jpeg'
 
 const typewriterPhrases = [
@@ -222,7 +223,7 @@ function AboutCreator() {
               </p>
 
               {/* Social links */}
-              <div className="mt-8 flex items-center justify-center gap-3 md:justify-start">
+              <div className="mt-8 flex items-center justify-center gap-3 md:justify-start flex-wrap">
                 <a
                   href="https://github.com/Abhinandan-4321"
                   target="_blank"
@@ -245,6 +246,11 @@ function AboutCreator() {
                 >
                   <Mail className="h-4 w-4" /> Email
                 </a>
+              </div>
+
+              {/* Buy Me Coffee */}
+              <div className="mt-6 flex justify-center md:justify-start">
+                <BuyMeCoffee />
               </div>
             </div>
           </div>

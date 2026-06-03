@@ -58,7 +58,7 @@ export default function Profile() {
       setProfile(prev => ({
         ...prev,
         followersCount: isFollowing
-          ? (prev.followersCount || 1) - 1
+          ? Math.max(0, (prev.followersCount || 0) - 1)
           : (prev.followersCount || 0) + 1,
       }))
       // Refresh current user to update followingCount in Dashboard
@@ -75,7 +75,7 @@ export default function Profile() {
       setFollowers(prev => prev.filter(f => f._id !== followerId))
       setProfile(prev => ({
         ...prev,
-        followersCount: Math.max(0, (prev.followersCount || 1) - 1),
+        followersCount: Math.max(0, (prev.followersCount || 0) - 1),
       }))
       fetchUser()
     } catch {}

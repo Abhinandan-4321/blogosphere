@@ -5,6 +5,7 @@ import { blogAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { getSocket } from '../services/socket'
 import CommentModal from '../components/CommentModal'
+import AIBlogChat from '../components/AIBlogChat'
 
 export default function ArticleDetail() {
   const { slug } = useParams()
@@ -228,6 +229,7 @@ export default function ArticleDetail() {
       </article>
 
       {showComments && <CommentModal blog={blog} onClose={() => setShowComments(false)} />}
+      <AIBlogChat blog={blog} />
     </>
   )
 }

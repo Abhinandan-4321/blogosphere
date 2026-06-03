@@ -19,6 +19,7 @@ import { TableCell } from '@tiptap/extension-table-cell'
 import { TableHeader } from '@tiptap/extension-table-header'
 import { blogAPI, draftAPI, uploadAPI } from '../services/api'
 import { saveDraft, getSocket } from '../services/socket'
+import AIWritingAssistant from '../components/AIWritingAssistant'
 
 const categories = ['general', 'technology', 'lifestyle', 'travel', 'food', 'design']
 
@@ -230,9 +231,9 @@ export default function Creator() {
   if (!editor) return null
 
   return (
-    <div className="flex min-h-[calc(100vh-6rem)] flex-col">
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center justify-between rounded-2xl border border-outline-variant/20 bg-surface-container-low mx-4 mb-3 px-3 py-2 gap-y-2">
+    <div className="flex h-[calc(100vh-6rem)] flex-col">
+      {/* Toolbar - Fixed at top */}
+      <div className="flex flex-wrap items-center justify-between rounded-2xl border border-outline-variant/20 bg-surface-container-low mx-4 mt-4 mb-3 px-3 py-2 gap-y-2 shadow-sm">
         <div className="flex flex-wrap items-center gap-0.5">
           <ToolbarBtn icon={<Undo2 className="h-4 w-4" />} onClick={() => editor.chain().focus().undo().run()} title="Undo" disabled={!editor.can().undo()} />
           <ToolbarBtn icon={<Redo2 className="h-4 w-4" />} onClick={() => editor.chain().focus().redo().run()} title="Redo" disabled={!editor.can().redo()} />
@@ -300,10 +301,12 @@ export default function Creator() {
           </div>
           <ToolbarBtn icon={<Table className="h-4 w-4" />} onClick={insertTable} title="Insert Table" />
           <ToolbarBtn icon={<Minus className="h-4 w-4" />} onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal Rule" />
+          <Sep />
+          <AIWritingAssistant editor={editor} />
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-on-surface-variant">
-            {isSaving ? 'Saving…' : lastSaved ? `Auto-saved ${formatTime(lastSaved)}` : ''}
+            {isSaving ? 'Saving draft…' : lastSaved ? `Saved ${formatTime(lastSaved)}` : (title || editorContent !== '<p></p>' ? 'Unsaved' : '')}
           </span>
           <button
             onClick={handlePublish}
@@ -316,9 +319,9 @@ export default function Creator() {
         </div>
       </div>
 
-      {/* Writing canvas */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
-        <div className="mx-auto max-w-3xl">
+      {/* Writing canvas - Scrollable container */}
+      <div className="flex-1 overflow-y-auto px-6 py-4 mx-4 mb-4 rounded-2xl border border-outline-variant/20 bg-surface-container-lowest">
+        <div className="mx-auto max-w-3xl py-4">
           {error && <div className="mb-4 rounded-xl bg-error-container px-4 py-2.5 text-sm text-on-error-container">{error}</div>}
 
           {/* Cover image upload */}

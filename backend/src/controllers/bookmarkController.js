@@ -67,11 +67,19 @@ export const getBookmarks = async (req, res, next) => {
       Bookmark.countDocuments(query),
     ]);
 
-    const blogs = bookmarks.map((b) => ({
-      ...b.blog.toObject(),
-      bookmarkFolder: b.folder,
-      bookmarkedAt: b.createdAt,
-    }));
+    // Filter out bookmarks where the blog was deleted, and clean up stale records
+    const staleIds = bookmarks.filter((b) => !b.blog).map((b) => b._id);
+    if (staleIds.length > 0) {
+      await Bookmark.deleteMany({ _id: { $in: staleIds } });
+    }
+
+    const blogs = bookmarks
+      .filter((b) => b.blog)
+      .map((b) => ({
+        ...b.blog.toObject(),
+        bookmarkFolder: b.folder,
+        bookmarkedAt: b.createdAt,
+      }));
 
     return sendPaginated(res, 200, "Bookmarks retrieved", blogs, {
       page,
@@ -88,18 +96,15 @@ export const getBookmarks = async (req, res, next) => {
 // @route   GET /api/bookmarks/folders
 export const getFolders = async (req, res, next) => {
   try {
-    const folders = await Bookmark.distinct("folder", { user: req.user._id });
-    
-    // Get count for each folder
-    const folderCounts = await Promise.all(
-      folders.map(async (folder) => {
-        const count = await Bookmark.countDocuments({
-          user: req.user._id,
-          folder,
-        });
-        return { name: folder, count };
-      })
-    );
+    // Aggregate folders only counting bookmarks with existing (non-deleted) blogs
+    const folderAgg = await Bookmark.aggregate([
+      { $match: { user: req.user._id } },
+      { $lookup: { from: "blogs", localField: "blog", foreignField: "_id", as: "blogDoc" } },
+      { $match: { "blogDoc.0": { $exists: true } } },
+      { $group: { _id: "$folder", count: { $sum: 1 } } },
+    ]);
+
+    const folderCounts = folderAgg.map((f) => ({ name: f._id, count: f.count }));
 
     return sendSuccess(res, 200, "Folders retrieved", folderCounts);
   } catch (error) {

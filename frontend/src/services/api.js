@@ -202,6 +202,13 @@ export const paymentAPI = {
   getStats: () => api.get('/payments/stats'),
 }
 
+// ────────── AI ──────────
+export const aiAPI = {
+  writingAssist: (data) => api.post('/ai/writing-assist', data),
+  suggestTags: (data) => api.post('/ai/suggest-tags', data),
+  blogChat: (data) => api.post('/ai/blog-chat', data),
+}
+
 // ────────── Admin ──────────
 export const adminAPI = {
   getDashboard: () => api.get('/admin/dashboard'),

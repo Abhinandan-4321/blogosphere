@@ -57,4 +57,12 @@ export const otpLimiter = createRateLimiter({
   prefix: "rl:otp:",
 });
 
+// AI rate limiter (protect free tier limits)
+export const aiLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: isProduction ? 10 : 30,
+  message: "AI request limit reached. Please try again in a few minutes.",
+  prefix: "rl:ai:",
+});
+
 export default createRateLimiter;

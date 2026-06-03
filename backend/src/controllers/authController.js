@@ -257,11 +257,10 @@ export const googleCallback = async (req, res, next) => {
 
     try {
       const redis = getRedisClient();
-      await redis.setex(
-        `rt:${user._id}`,
-        7 * 24 * 60 * 60,
-        tokens.refreshToken
-      );
+      await Promise.race([
+        redis.setex(`rt:${user._id}`, 7 * 24 * 60 * 60, tokens.refreshToken),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis timeout')), 3000))
+      ]);
     } catch (redisErr) {
       console.warn("Redis refresh token store failed:", redisErr.message);
     }

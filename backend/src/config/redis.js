@@ -18,7 +18,14 @@ const connectRedis = () => {
     });
 
     redisClient.on("error", (err) => {
-      console.error("Redis Connection Error:", err.message);
+      // Silently handle connection resets and common errors
+      if (err.code !== 'ECONNRESET' && err.code !== 'EPIPE') {
+        console.error("Redis Connection Error:", err.message);
+      }
+    });
+
+    redisClient.on("reconnecting", () => {
+      console.log("Redis reconnecting...");
     });
 
     return redisClient;

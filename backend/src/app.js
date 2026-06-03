@@ -23,6 +23,9 @@ import { apiLimiter } from "./middlewares/rateLimiter.js";
 
 const app = express();
 
+// Trust proxy - required for Render, Heroku, etc. to get real client IPs
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 

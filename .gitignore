@@ -46,6 +46,7 @@ Thumbs.db
 .DS_Store
 
 # Internal documentation (development notes - not for repo)
+docs/
 BEIGE_GREEN_COLOR_PALETTE.md
 COLOR_PALETTE_QUICK_REFERENCE.md
 FEATURES_SUMMARY.txt

@@ -32,13 +32,13 @@ export default function Drafts() {
   }
 
   return (
-    <div className="px-6 py-2">
+    <div className="px-3 sm:px-6 py-2">
       <div className="mx-auto max-w-5xl">
         <PageTabs />
 
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h1 className="font-headline text-2xl font-semibold tracking-tight text-on-surface">Your Drafts</h1>
+            <h1 className="font-headline text-xl sm:text-2xl font-semibold tracking-tight text-on-surface">Your Drafts</h1>
             <p className="mt-1 text-sm text-on-surface-variant">{drafts.length} draft{drafts.length !== 1 ? 's' : ''} in progress</p>
           </div>
           <Link
@@ -63,7 +63,7 @@ export default function Drafts() {
         ) : (
           <div className="space-y-3">
             {drafts.map(draft => (
-              <div key={draft._id} className="flex items-center justify-between rounded-2xl border border-outline-variant/20 bg-surface-container-low p-5 transition hover:border-outline-variant/40">
+              <div key={draft._id} className="flex items-center justify-between rounded-2xl border border-outline-variant/20 bg-surface-container-low p-3 sm:p-5 transition hover:border-outline-variant/40">
                 <Link to={`/create?draft=${draft._id}`} className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-on-surface truncate">{draft.title || 'Untitled Draft'}</p>
                   <p className="mt-1 text-xs text-on-surface-variant line-clamp-1">{draft.content ? draft.content.substring(0, 120) + (draft.content.length > 120 ? '…' : '') : 'No content yet'}</p>
@@ -82,7 +82,7 @@ export default function Drafts() {
                 </Link>
                 <button
                   onClick={() => setDeleteTarget({ id: draft._id, title: draft.title || 'Untitled draft' })}
-                  className="ml-4 rounded-md p-2 text-on-surface-variant hover:bg-error-container/30 hover:text-error transition flex-shrink-0"
+                  className="ml-2 sm:ml-4 rounded-md p-2 text-on-surface-variant hover:bg-error-container/30 hover:text-error transition flex-shrink-0"
                   title="Delete draft"
                 >
                   <Trash2 className="h-4 w-4" />

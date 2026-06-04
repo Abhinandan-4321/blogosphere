@@ -14,8 +14,9 @@ import configureTwilio from "./src/config/twilio.js";
 import configureSocket from "./src/config/socket.js";
 import registerSocketHandlers from "./src/events/socketHandlers.js";
 import seedAdmin from "./src/utils/seedAdmin.js";
+import { startAutoDeleteJob } from "./src/jobs/autoDeleteFlaggedPosts.js";
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 const startServer = async () => {
   try {
@@ -40,6 +41,9 @@ const startServer = async () => {
     // Configure Socket.io
     const io = configureSocket(httpServer);
     registerSocketHandlers(io);
+
+    // Start cron jobs
+    startAutoDeleteJob();
 
     // Start server
     httpServer.listen(PORT, () => {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { X, Send, Loader2, Reply, Trash2 } from 'lucide-react'
 import { blogAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
@@ -23,7 +24,7 @@ function CommentItem({ comment, blogId, currentUserId, onReply, onDelete, depth 
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-on-surface">{comment.author?.name}</span>
+            <Link to={`/profile/${comment.author?._id}`} className="text-xs font-medium text-on-surface hover:text-primary transition">{comment.author?.name}</Link>
             <span className="text-[10px] text-on-surface-variant">{timeAgo(comment.createdAt)}</span>
           </div>
           <p className="mt-0.5 text-sm leading-relaxed text-on-surface-variant">{comment.content}</p>
@@ -89,6 +90,8 @@ export default function CommentModal({ blog, onClose }) {
 
     const socket = getSocket()
     const handler = (comment) => {
+      // Skip if this comment was posted by the current user (already added optimistically)
+      if (comment.author?._id === user?._id) return
       if (comment.parentComment) {
         setComments(prev => prev.map(c =>
           c._id === comment.parentComment

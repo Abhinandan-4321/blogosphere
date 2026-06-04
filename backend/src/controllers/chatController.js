@@ -83,6 +83,40 @@ export const getConversations = async (req, res, next) => {
   }
 };
 
+// @desc    Get hidden conversations for the current user
+// @route   GET /api/conversations/hidden
+export const getHiddenConversations = async (req, res, next) => {
+  try {
+    const conversations = await Conversation.find({
+      participants: req.user._id,
+      hiddenBy: req.user._id,
+    })
+      .sort({ lastMessageAt: -1 })
+      .populate("participants", "name avatar deletedAt")
+      .populate({
+        path: "lastMessage",
+        select: "content messageType sender createdAt",
+      });
+
+    const mapped = conversations.map((conv) => {
+      const other = conv.participants.find(
+        (p) => p._id.toString() !== req.user._id.toString()
+      );
+      return {
+        _id: conv._id,
+        otherUser: other,
+        lastMessage: conv.lastMessage,
+        lastMessageAt: conv.lastMessageAt,
+        unreadCount: conv.unreadCounts?.get(req.user._id.toString()) || 0,
+      };
+    });
+
+    return sendSuccess(res, 200, "Hidden conversations retrieved", mapped);
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get or create a conversation with a specific user
 // @route   POST /api/conversations
 export const getOrCreateConversation = async (req, res, next) => {

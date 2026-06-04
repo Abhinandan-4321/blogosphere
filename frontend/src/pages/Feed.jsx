@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { Heart, MessageCircle, Clock, Search, SlidersHorizontal, Loader2, Bookmark } from 'lucide-react'
+import { Heart, MessageCircle, Clock, Search, SlidersHorizontal, Bookmark, RefreshCw } from 'lucide-react'
 import { blogAPI, bookmarkAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import CommentModal from '../components/CommentModal'
@@ -9,6 +9,35 @@ import ImageCarousel from '../components/ImageCarousel'
 import LikeTooltip from '../components/LikeTooltip'
 
 const categories = ['all', 'technology', 'lifestyle', 'travel', 'food', 'design', 'general']
+
+function BlogCardSkeleton() {
+  return (
+    <article className="rounded-2xl border border-outline-variant/20 bg-surface-container-low p-5 animate-pulse">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-8 w-8 rounded-full bg-surface-container-high" />
+            <div className="space-y-1.5">
+              <div className="h-3 w-24 rounded-full bg-surface-container-high" />
+              <div className="h-2.5 w-16 rounded-full bg-surface-container-high/60" />
+            </div>
+          </div>
+          <div className="h-4 w-3/4 rounded-full bg-surface-container-high mb-2" />
+          <div className="space-y-1.5 mb-3">
+            <div className="h-3 w-full rounded-full bg-surface-container-high/50" />
+            <div className="h-3 w-5/6 rounded-full bg-surface-container-high/50" />
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="h-3 w-12 rounded-full bg-surface-container-high/40" />
+            <div className="h-3 w-12 rounded-full bg-surface-container-high/40" />
+            <div className="h-3 w-8 rounded-full bg-surface-container-high/40" />
+          </div>
+        </div>
+        <div className="h-24 w-36 flex-shrink-0 rounded-xl bg-surface-container-high" />
+      </div>
+    </article>
+  )
+}
 
 function BlogCard({ blog, onCommentClick }) {
   const { isAuthenticated } = useAuth()
@@ -49,55 +78,69 @@ function BlogCard({ blog, onCommentClick }) {
   }
 
   return (
-    <article className="group rounded-2xl border border-outline-variant/15 bg-surface-container-low p-5 transition hover:border-outline-variant/30 hover:shadow-sm">
+    <article className="group rounded-2xl border border-outline-variant/10 bg-surface-container-low p-6 shadow-sm transition duration-300 hover:border-outline-variant/30 hover:shadow-lg hover:bg-surface-container hover:-translate-y-0.5">
       <div className="flex gap-5">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
-            <Link to={`/profile/${blog.author?._id}`} className="h-7 w-7 rounded-full bg-surface-container-high flex items-center justify-center text-xs font-medium text-on-surface-variant overflow-hidden">
-              {blog.author?.avatar ? <img src={blog.author.avatar} alt="" className="h-full w-full object-cover" /> : blog.author?.name?.[0]}
+          <div className="mb-3 flex items-center gap-2.5">
+            <Link to={`/profile/${blog.author?._id}`} className="h-8 w-8 flex-shrink-0 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-xs font-semibold text-on-surface-variant overflow-hidden ring-1 ring-primary/20 transition hover:ring-primary/40">
+              {blog.author?.avatar ? <img src={blog.author.avatar} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" /> : blog.author?.name?.[0]}
             </Link>
-            <Link to={`/profile/${blog.author?._id}`} className="text-sm font-medium text-on-surface hover:text-primary transition">{blog.author?.name}</Link>
-            <span className="text-outline-variant">·</span>
-            <span className="text-xs text-on-surface-variant">{new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+            <div className="flex-1 min-w-0">
+              <Link to={`/profile/${blog.author?._id}`} className="text-sm font-semibold text-on-surface hover:text-primary transition">{blog.author?.name}</Link>
+              <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
+                <span>·</span>
+                <span>{new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}</span>
+              </div>
+            </div>
           </div>
-          <Link to={`/blog/${blog.slug || blog._id}`}>
-            <h2 className="font-headline text-xl font-semibold leading-snug tracking-tight text-on-surface transition group-hover:text-primary">
+          <Link to={`/blog/${blog.slug || blog._id}`} className="block">
+            <h2 className="font-headline text-lg font-semibold leading-snug tracking-tight text-on-surface transition duration-200 group-hover:text-primary">
               {blog.title}
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-on-surface-variant line-clamp-2">{blog.excerpt}</p>
+            <p className="mt-2.5 text-sm leading-relaxed text-on-surface-variant line-clamp-2 group-hover:text-on-surface/80 transition">{blog.excerpt}</p>
           </Link>
-          <div className="mt-3 flex items-center gap-4">
-            <span className="inline-flex items-center rounded-full bg-surface-container-high px-2.5 py-0.5 text-xs font-medium text-on-surface-variant">
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary ring-1 ring-primary/20">
               {blog.category}
             </span>
-            <span className="flex items-center gap-1 text-xs text-on-surface-variant">
-              <Clock className="h-3 w-3" /> {blog.readTime} min read
+            <span className="flex items-center gap-1.5 text-xs text-on-surface-variant">
+              <Clock className="h-3.5 w-3.5" /> {blog.readTime} min
             </span>
-            <LikeTooltip blogId={blog._id}>
-              <button onClick={handleLike} className={`flex items-center gap-1 text-xs transition ${
-                liked ? 'text-red-500' : 'text-on-surface-variant hover:text-red-400'
-              }`}>
-                <Heart className={`h-3.5 w-3.5 ${liked ? 'fill-red-500' : ''}`} /> {likesCount}
+            
+            <div className="ml-auto flex items-center gap-3">
+              <LikeTooltip blogId={blog._id}>
+                <button onClick={handleLike} className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition duration-200 ${
+                  liked 
+                    ? 'bg-red-500/10 text-red-500 ring-1 ring-red-500/20' 
+                    : 'text-on-surface-variant hover:bg-red-500/10 hover:text-red-500 hover:ring-1 hover:ring-red-500/20'
+                }`}>
+                  <Heart className={`h-3.5 w-3.5 ${liked ? 'fill-red-500' : ''}`} /> {likesCount}
+                </button>
+              </LikeTooltip>
+              <button onClick={() => onCommentClick(blog)} className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-on-surface-variant transition duration-200 hover:bg-primary/10 hover:text-primary hover:ring-1 hover:ring-primary/20">
+                <MessageCircle className="h-3.5 w-3.5" /> {blog.commentsCount || 0}
               </button>
-            </LikeTooltip>
-            <button onClick={() => onCommentClick(blog)} className="flex items-center gap-1 text-xs text-on-surface-variant transition hover:text-on-surface">
-              <MessageCircle className="h-3.5 w-3.5" /> {blog.commentsCount || 0}
-            </button>
-            <button 
-              onClick={handleSaveClick}
-              className={`flex items-center gap-1 text-xs transition ${
-                bookmarked ? 'text-on-surface' : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-            >
-              <Bookmark className={`h-3.5 w-3.5 ${bookmarked ? 'fill-on-surface' : ''}`} />
-            </button>
+              <button 
+                onClick={handleSaveClick}
+                className={`rounded-lg p-1.5 transition duration-200 ${
+                  bookmarked 
+                    ? 'bg-on-surface/10 text-on-surface ring-1 ring-on-surface/20' 
+                    : 'text-on-surface-variant hover:bg-on-surface/10 hover:text-on-surface hover:ring-1 hover:ring-on-surface/20'
+                }`}
+                title={bookmarked ? 'Remove bookmark' : 'Add to collection'}
+              >
+                <Bookmark className={`h-4 w-4 ${bookmarked ? 'fill-on-surface' : ''}`} />
+              </button>
+            </div>
           </div>
         </div>
         {(blog.images?.length > 0 || blog.coverImage) && (
-          <ImageCarousel
-            images={blog.images?.length > 0 ? blog.images : [blog.coverImage]}
-            className="h-24 w-36 flex-shrink-0"
-          />
+          <div className="hidden sm:block flex-shrink-0">
+            <ImageCarousel
+              images={blog.images?.length > 0 ? blog.images : [blog.coverImage]}
+              className="h-28 w-40 rounded-xl shadow-md ring-1 ring-outline-variant/20 overflow-hidden group-hover:shadow-lg group-hover:ring-outline-variant/30 transition duration-300"
+            />
+          </div>
         )}
       </div>
       {showSaveModal && (
@@ -122,6 +165,7 @@ export default function Feed() {
   const [error, setError] = useState('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [refreshing, setRefreshing] = useState(false)
 
   // Filter panel state
   const [showFilters, setShowFilters] = useState(false)
@@ -186,6 +230,15 @@ export default function Feed() {
     setMaxReadTime('')
     setDateFrom('')
     setDateTo('')
+  }
+
+  const refreshFeed = async () => {
+    setRefreshing(true)
+    try {
+      await fetchBlogs()
+    } finally {
+      setRefreshing(false)
+    }
   }
 
   const hasActiveFilters = sortBy !== 'latest' || filterTag || minReadTime || maxReadTime || dateFrom || dateTo
@@ -293,12 +346,27 @@ export default function Feed() {
             </div>
 
             <div className="mb-4 rounded-2xl bg-surface-container-low border border-outline-variant/15 p-4">
-              <h1 className="font-headline text-xl font-semibold tracking-tight text-on-surface">Recent Chronicles</h1>
-              <p className="mt-0.5 text-xs text-on-surface-variant">A curated collection of thought, design, and minimalist living.</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="font-headline text-xl font-semibold tracking-tight text-on-surface">Recent Chronicles</h1>
+                  <p className="mt-0.5 text-xs text-on-surface-variant">A curated collection of thought, design, and minimalist living.</p>
+                </div>
+                <button
+                  onClick={refreshFeed}
+                  disabled={refreshing}
+                  className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-on-surface-variant transition hover:bg-surface-container hover:text-on-surface disabled:opacity-40"
+                  title="Refresh feed"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+                  {refreshing ? 'Refreshing...' : 'Refresh'}
+                </button>
+              </div>
             </div>
 
             {loading ? (
-              <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-on-surface-variant" /></div>
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => <BlogCardSkeleton key={i} />)}
+              </div>
             ) : error ? (
               <div className="py-16 text-center">
                 <p className="text-error">{error}</p>

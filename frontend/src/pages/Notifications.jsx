@@ -1,7 +1,32 @@
 import { useState, useEffect } from 'react'
-import { Bell, Heart, MessageCircle, UserPlus, Check, X, Trash2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Bell, Heart, MessageCircle, UserPlus, Check, X, Trash2, AlertTriangle } from 'lucide-react'
 import { notificationAPI } from '../services/api'
 import { getSocket } from '../services/socket'
+
+function getNotifLink(notif) {
+  switch (notif.type) {
+    case 'like':
+    case 'comment':
+    case 'new_post':
+    case 'post_flagged':
+      if (notif.relatedBlog?.slug) return `/blog/${notif.relatedBlog.slug}`
+      if (notif.relatedBlog?._id) return `/blog/${notif.relatedBlog._id}`
+      if (notif.relatedBlog) return `/blog/${notif.relatedBlog}`
+      return null
+    case 'follow':
+      if (notif.relatedUser?._id) return `/profile/${notif.relatedUser._id}`
+      if (notif.relatedUser) return `/profile/${notif.relatedUser}`
+      return null
+    case 'chat_message':
+      return '/messages'
+    case 'coffee_received':
+      if (notif.relatedUser?._id) return `/profile/${notif.relatedUser._id}`
+      return null
+    default:
+      return null
+  }
+}
 
 function timeAgo(date) {
   const seconds = Math.floor((Date.now() - new Date(date)) / 1000)
@@ -15,6 +40,7 @@ function getNotifIcon(type) {
   switch (type) {
     case 'like': return <Heart className="h-5 w-5 text-red-500" />
     case 'comment': return <MessageCircle className="h-5 w-5 text-blue-500" />
+    case 'post_flagged': return <AlertTriangle className="h-5 w-5 text-error" />
     case 'follow': return <UserPlus className="h-5 w-5 text-green-500" />
     case 'chat_message': return <MessageCircle className="h-5 w-5 text-purple-500" />
     default: return <Bell className="h-5 w-5 text-on-surface-variant" />
@@ -22,6 +48,7 @@ function getNotifIcon(type) {
 }
 
 export default function Notifications() {
+  const navigate = useNavigate()
   const [notifications, setNotifications] = useState([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -81,10 +108,18 @@ export default function Notifications() {
   }
 
   const clearAll = async () => {
-    if (!window.confirm('Clear all notifications? This cannot be undone.')) return
+    const flaggedCount = notifications.filter(n => n.type === 'post_flagged').length
+    const message = flaggedCount > 0 
+      ? `Clear all notifications except ${flaggedCount} flagged post notification(s)? This cannot be undone.`
+      : 'Clear all notifications? This cannot be undone.'
+    
+    if (!window.confirm(message)) return
+    
     try {
       await notificationAPI.clearAll()
-      setNotifications([])
+      // Keep flagged notifications, remove others
+      const flaggedNotifs = notifications.filter(n => n.type === 'post_flagged')
+      setNotifications(flaggedNotifs)
       setUnreadCount(0)
     } catch {}
   }
@@ -98,10 +133,10 @@ export default function Notifications() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-8">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="mx-auto max-w-3xl px-3 sm:px-6 py-6 sm:py-8">
+      <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="font-headline text-2xl font-bold tracking-tight text-on-surface">Notifications</h1>
+          <h1 className="font-headline text-xl sm:text-2xl font-bold tracking-tight text-on-surface">Notifications</h1>
           <p className="mt-1 text-sm text-on-surface-variant">
             {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}` : 'All caught up!'}
           </p>
@@ -139,8 +174,12 @@ export default function Notifications() {
           notifications.map((notif) => (
             <div
               key={notif._id}
-              onClick={() => !notif.isRead && markAsRead(notif._id)}
-              className={`flex items-start gap-4 px-6 py-4 transition cursor-pointer ${
+              onClick={() => {
+                if (!notif.isRead) markAsRead(notif._id)
+                const link = getNotifLink(notif)
+                if (link) navigate(link)
+              }}
+              className={`flex items-start gap-4 px-4 sm:px-6 py-4 transition cursor-pointer ${
                 notif.isRead ? 'hover:bg-surface-container-high/50' : 'bg-primary-fixed/10 hover:bg-primary-fixed/20'
               }`}
             >
@@ -159,13 +198,20 @@ export default function Notifications() {
                 {!notif.isRead && (
                   <div className="h-2 w-2 rounded-full bg-primary" />
                 )}
-                <button
-                  onClick={(e) => deleteNotif(e, notif._id)}
-                  className="rounded-md p-1 text-on-surface-variant/40 transition hover:bg-error-container/30 hover:text-error"
-                  title="Delete notification"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                {notif.type !== 'post_flagged' && (
+                  <button
+                    onClick={(e) => deleteNotif(e, notif._id)}
+                    className="rounded-md p-1 text-on-surface-variant/40 transition hover:bg-error-container/30 hover:text-error"
+                    title="Delete notification"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+                {notif.type === 'post_flagged' && (
+                  <div className="rounded-md bg-error/10 px-2 py-1 text-xs font-medium text-error">
+                    Required Action
+                  </div>
+                )}
               </div>
             </div>
           ))

@@ -170,6 +170,62 @@ export const suggestTags = async (req, res, next) => {
   }
 };
 
+export const generateImage = async (req, res, next) => {
+  try {
+    const { prompt } = req.body;
+
+    if (!prompt || !prompt.trim()) {
+      return sendError(res, 400, "Prompt is required");
+    }
+
+    if (prompt.length > 500) {
+      return sendError(res, 400, "Prompt must be under 500 characters");
+    }
+
+    const cleanPrompt = prompt.trim();
+    const encodedPrompt = encodeURIComponent(cleanPrompt);
+    
+    // Try Pollinations.ai with retry logic
+    let imageUrl = null;
+    let lastError = null;
+    
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const pollUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=768&nologo=true`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 20000);
+        
+        const checkResponse = await fetch(pollUrl, { 
+          method: "HEAD", 
+          signal: controller.signal,
+          headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+        clearTimeout(timeoutId);
+        
+        if (checkResponse.ok || checkResponse.status === 200) {
+          imageUrl = pollUrl;
+          break;
+        }
+        lastError = `Service returned ${checkResponse.status}`;
+      } catch (err) {
+        lastError = err.message;
+        console.log(`[AI Image] Attempt ${attempt} failed:`, lastError);
+        if (attempt < 2) {
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+      }
+    }
+
+    if (!imageUrl) {
+      return sendError(res, 503, "Image generation service is temporarily unavailable. Please try again in a moment.");
+    }
+
+    return sendSuccess(res, 200, "Image generated", { imageUrl, prompt: cleanPrompt });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const blogChat = async (req, res, next) => {
   try {
     const { blogTitle, blogContent, userMessage, chatHistory = [] } = req.body;

@@ -73,6 +73,27 @@ const blogSchema = new mongoose.Schema(
       type: Number, // in minutes
       default: 1,
     },
+    flagged: {
+      type: Boolean,
+      default: false,
+    },
+    flagReason: {
+      type: String,
+      default: "",
+    },
+    flaggedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    flaggedAt: {
+      type: Date,
+      default: null,
+    },
+    deletionDeadline: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

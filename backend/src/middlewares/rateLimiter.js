@@ -68,4 +68,12 @@ export const aiLimiter = createRateLimiter({
   prefix: "rl:ai:",
 });
 
+// AI Image generation rate limiter (4 per 24 hours)
+export const aiImageLimiter = createRateLimiter({
+  windowMs: 24 * 60 * 60 * 1000,
+  max: isProduction ? 4 : 20,
+  message: "Daily AI image generation limit reached (4/day). Try again tomorrow.",
+  prefix: "rl:ai-img:",
+});
+
 export default createRateLimiter;

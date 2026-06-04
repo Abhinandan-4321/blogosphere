@@ -1,9 +1,29 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Bell, PenSquare, User, LogOut, Heart, Bookmark, Settings, MessageCircle, UserPlus, MessageSquare, ChevronLeft, ChevronRight, Shield } from 'lucide-react'
+import { Bell, PenSquare, User, LogOut, Heart, Bookmark, Settings, MessageCircle, UserPlus, MessageSquare, ChevronLeft, ChevronRight, Shield, Menu, X, LayoutDashboard, BookOpen } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { notificationAPI, chatAPI } from '../services/api'
 import { getSocket } from '../services/socket'
+import UserAvatar from './UserAvatar'
+
+function getNotifLink(notif) {
+  switch (notif.type) {
+    case 'like': case 'comment': case 'new_post':
+      if (notif.relatedBlog?.slug) return `/blog/${notif.relatedBlog.slug}`
+      if (notif.relatedBlog?._id) return `/blog/${notif.relatedBlog._id}`
+      if (notif.relatedBlog) return `/blog/${notif.relatedBlog}`
+      return null
+    case 'follow':
+      if (notif.relatedUser?._id) return `/profile/${notif.relatedUser._id}`
+      if (notif.relatedUser) return `/profile/${notif.relatedUser}`
+      return null
+    case 'chat_message': return '/messages'
+    case 'coffee_received':
+      if (notif.relatedUser?._id) return `/profile/${notif.relatedUser._id}`
+      return null
+    default: return null
+  }
+}
 
 function timeAgo(date) {
   const seconds = Math.floor((Date.now() - new Date(date)) / 1000)
@@ -33,8 +53,10 @@ export default function Header() {
   const [navVisible, setNavVisible] = useState(true)
   const navigate = useNavigate()
   const location = useLocation()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const notifRef = useRef(null)
   const userMenuRef = useRef(null)
+  const mobileMenuRef = useRef(null)
   const hideTimerRef = useRef(null)
   const isScrolledRef = useRef(false)
 
@@ -82,10 +104,18 @@ export default function Header() {
     const handler = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifications(false)
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) setShowUserMenu(false)
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target)) setMobileMenuOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false)
+    setShowUserMenu(false)
+    setShowNotifications(false)
+  }, [location.pathname])
 
   useEffect(() => {
     if (!isAuthenticated) return
@@ -142,22 +172,25 @@ export default function Header() {
           : 'border-outline-variant/30 bg-surface-container-low/90'
       }`}>
         {/* Left: Nav buttons + Logo */}
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => navigate(-1)}
-            className="rounded-xl p-1.5 text-on-surface-variant transition hover:bg-surface-container-high"
-            title="Go back"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => navigate(1)}
-            className="rounded-xl p-1.5 text-on-surface-variant transition hover:bg-surface-container-high"
-            title="Go forward"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-          <Link to={isAuthenticated ? '/feed' : '/'} className="ml-2 font-display text-lg font-semibold italic tracking-tight text-on-surface">
+        <div className="flex items-center gap-1.5">
+          <div className="hidden sm:flex items-center rounded-full bg-surface-container-high/60 border border-outline-variant/20">
+            <button
+              onClick={() => navigate(-1)}
+              className="rounded-l-full p-1.5 text-on-surface-variant transition hover:bg-surface-container-high"
+              title="Go back"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <div className="w-px h-4 bg-outline-variant/25" />
+            <button
+              onClick={() => navigate(1)}
+              className="rounded-r-full p-1.5 text-on-surface-variant transition hover:bg-surface-container-high"
+              title="Go forward"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+          <Link to={isAuthenticated ? '/feed' : '/'} className="ml-1 font-display text-lg font-semibold italic tracking-tight text-on-surface">
             Blogosphere
           </Link>
         </div>
@@ -190,8 +223,72 @@ export default function Header() {
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
             <>
-              {/* Notifications */}
-              <div className="relative" ref={notifRef}>
+              {/* Mobile hamburger */}
+              <div className="relative md:hidden" ref={mobileMenuRef}>
+                <button
+                  onClick={() => { setMobileMenuOpen(!mobileMenuOpen); setShowNotifications(false); setShowUserMenu(false) }}
+                  className="rounded-xl p-2 text-on-surface-variant transition hover:bg-surface-container-high"
+                >
+                  {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </button>
+                {mobileMenuOpen && (
+                  <div className="popup-enter absolute right-0 top-12 z-50 w-64 rounded-2xl border border-outline-variant/30 bg-surface-container-low shadow-xl overflow-hidden">
+                    <div className="border-b border-outline-variant/20 px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <UserAvatar src={user?.avatar} name={user?.name} size="lg" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-on-surface truncate">{user?.name}</p>
+                          <p className="text-xs text-on-surface-variant truncate">{user?.email}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="py-1">
+                      <Link to="/feed" className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container transition">
+                        <BookOpen className="h-4 w-4" /> Feed
+                      </Link>
+                      <Link to="/dashboard" className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container transition">
+                        <LayoutDashboard className="h-4 w-4" /> Dashboard
+                      </Link>
+                      <Link to="/messages" className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container transition">
+                        <MessageCircle className="h-4 w-4" /> Messages
+                        {chatUnread > 0 && <span className="ml-auto rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold text-on-primary">{chatUnread > 9 ? '9+' : chatUnread}</span>}
+                      </Link>
+                      <Link to="/notifications" className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container transition">
+                        <Bell className="h-4 w-4" /> Notifications
+                        {unreadCount > 0 && <span className="ml-auto rounded-full bg-error px-2 py-0.5 text-[9px] font-bold text-on-error">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+                      </Link>
+                      <Link to="/create" className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container transition">
+                        <PenSquare className="h-4 w-4" /> Write
+                      </Link>
+                      <div className="border-t border-outline-variant/20 my-1" />
+                      <Link to={`/profile/${user?._id}`} className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container transition">
+                        <User className="h-4 w-4" /> Profile
+                      </Link>
+                      <Link to="/settings" className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container transition">
+                        <Settings className="h-4 w-4" /> Settings
+                      </Link>
+                      <Link to="/liked" className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container transition">
+                        <Heart className="h-4 w-4" /> Liked Posts
+                      </Link>
+                      <Link to="/favorites" className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container transition">
+                        <Bookmark className="h-4 w-4" /> Saved
+                      </Link>
+                      {user?.role === 'admin' && (
+                        <Link to="/admin" className="flex items-center gap-3 px-4 py-2.5 text-sm text-on-surface-variant hover:bg-surface-container transition">
+                          <Shield className="h-4 w-4" /> Admin Panel
+                        </Link>
+                      )}
+                      <div className="border-t border-outline-variant/20 my-1" />
+                      <button onClick={handleLogout} className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-error hover:bg-error-container/30 transition">
+                        <LogOut className="h-4 w-4" /> Sign out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Notifications (desktop only) */}
+              <div className="relative hidden md:block" ref={notifRef}>
                 <button onClick={handleOpenNotifications} className="relative rounded-xl p-2 text-on-surface-variant transition hover:bg-surface-container-high">
                   <Bell className="h-[18px] w-[18px]" />
                   {unreadCount > 0 && (
@@ -216,7 +313,7 @@ export default function Header() {
                         </div>
                       ) : (
                         notifications.map((notif, i) => (
-                          <div key={notif._id || i} className={`flex items-start gap-3 px-4 py-3 transition hover:bg-surface-container ${!notif.read ? 'bg-primary-fixed/20' : ''}`}>
+                          <div key={notif._id || i} onClick={() => { const link = getNotifLink(notif); if (link) { setShowNotifications(false); navigate(link) } }} className={`flex items-start gap-3 px-4 py-3 transition hover:bg-surface-container cursor-pointer ${!notif.read ? 'bg-primary-fixed/20' : ''}`}>
                             <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-surface-container-high">
                               {getNotifIcon(notif.type)}
                             </div>
@@ -232,14 +329,14 @@ export default function Header() {
                 )}
               </div>
 
-              <Link to="/create" className="flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-1.5 text-sm font-medium text-on-primary transition hover:bg-primary-container hover:text-on-primary-container">
+              <Link to="/create" className="hidden md:flex items-center gap-1.5 rounded-xl bg-primary px-3.5 py-1.5 text-sm font-medium text-on-primary transition hover:bg-primary-container hover:text-on-primary-container">
                 <PenSquare className="h-3.5 w-3.5" /> Write
               </Link>
 
-              {/* User Menu */}
-              <div className="relative" ref={userMenuRef}>
-                <button onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifications(false) }} className="flex h-8 w-8 items-center justify-center rounded-full bg-surface-container-high text-xs font-semibold text-on-surface-variant hover:bg-surface-variant overflow-hidden transition">
-                  {user?.avatar ? <img src={user.avatar} alt="" className="h-full w-full rounded-full object-cover" /> : user?.name?.[0] || 'U'}
+              {/* User Menu (desktop only) */}
+              <div className="relative hidden md:block" ref={userMenuRef}>
+                <button onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifications(false) }} className="hover:opacity-80 transition">
+                  <UserAvatar src={user?.avatar} name={user?.name} size="md" />
                 </button>
                 {showUserMenu && (
                   <div className="popup-enter absolute right-0 top-11 z-50 w-56 rounded-2xl border border-outline-variant/30 bg-surface-container-low py-1 shadow-xl overflow-hidden">

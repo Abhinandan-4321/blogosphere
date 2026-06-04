@@ -9,6 +9,27 @@ body {
   background-color: #fcf9f2;
   color: #1c1c18;
   position: relative;
+  overflow-x: hidden;
+}
+
+/* Minimal scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(28, 28, 24, 0.15);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(28, 28, 24, 0.3);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(28, 28, 24, 0.15) transparent;
 }
 
 /* Subtle paper-grain noise overlay */

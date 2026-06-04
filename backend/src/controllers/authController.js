@@ -109,14 +109,11 @@ export const login = async (req, res, next) => {
 
     const tokens = generateTokenPair(user);
 
-    // Store refresh token in Redis
+    // Store refresh token in Redis (fire-and-forget)
     try {
       const redis = getRedisClient();
-      await redis.setex(
-        `rt:${user._id}`,
-        7 * 24 * 60 * 60,
-        tokens.refreshToken
-      );
+      redis.setex(`rt:${user._id}`, 7 * 24 * 60 * 60, tokens.refreshToken)
+        .catch(err => console.warn("Redis refresh token store failed:", err.message));
     } catch (redisErr) {
       console.warn("Redis refresh token store failed:", redisErr.message);
     }
@@ -202,13 +199,11 @@ export const verifyOtp = async (req, res, next) => {
     if (user.isVerified) {
       const tokens = generateTokenPair(user);
 
+      // Fire-and-forget: store refresh token in Redis
       try {
         const redis = getRedisClient();
-        await redis.setex(
-          `rt:${user._id}`,
-          7 * 24 * 60 * 60,
-          tokens.refreshToken
-        );
+        redis.setex(`rt:${user._id}`, 7 * 24 * 60 * 60, tokens.refreshToken)
+          .catch(err => console.warn("Redis refresh token store failed:", err.message));
       } catch (redisErr) {
         console.warn("Redis refresh token store failed:", redisErr.message);
       }
@@ -285,10 +280,13 @@ export const refreshToken = async (req, res, next) => {
 
     const decoded = verifyRefreshToken(token);
 
-    // Verify refresh token exists in Redis
+    // Verify refresh token exists in Redis (with timeout)
     try {
       const redis = getRedisClient();
-      const storedToken = await redis.get(`rt:${decoded.id}`);
+      const storedToken = await Promise.race([
+        redis.get(`rt:${decoded.id}`),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis timeout')), 3000))
+      ]);
       if (!storedToken || storedToken !== token) {
         return sendError(res, 401, "Invalid refresh token");
       }
@@ -303,14 +301,11 @@ export const refreshToken = async (req, res, next) => {
 
     const tokens = generateTokenPair(user);
 
-    // Update refresh token in Redis
+    // Update refresh token in Redis (fire-and-forget)
     try {
       const redis = getRedisClient();
-      await redis.setex(
-        `rt:${user._id}`,
-        7 * 24 * 60 * 60,
-        tokens.refreshToken
-      );
+      redis.setex(`rt:${user._id}`, 7 * 24 * 60 * 60, tokens.refreshToken)
+        .catch(err => console.warn("Redis refresh token update failed:", err.message));
     } catch (redisErr) {
       console.warn("Redis refresh token update failed:", redisErr.message);
     }
@@ -333,10 +328,12 @@ export const logout = async (req, res, next) => {
 
     try {
       const redis = getRedisClient();
-      // Blacklist the access token
-      await redis.setex(`bl:${token}`, 15 * 60, "1"); // 15 min TTL
-      // Remove refresh token
-      await redis.del(`rt:${userId}`);
+      // Blacklist the access token (fire-and-forget)
+      redis.setex(`bl:${token}`, 15 * 60, "1")
+        .catch(err => console.warn("Redis blacklist failed:", err.message));
+      // Remove refresh token (fire-and-forget)
+      redis.del(`rt:${userId}`)
+        .catch(err => console.warn("Redis rt delete failed:", err.message));
     } catch (redisErr) {
       console.warn("Redis logout cleanup failed:", redisErr.message);
     }
@@ -411,10 +408,11 @@ export const resetPassword = async (req, res, next) => {
     user.resetPasswordExpiry = null;
     await user.save();
 
-    // Invalidate all existing sessions
+    // Invalidate all existing sessions (fire-and-forget)
     try {
       const redis = getRedisClient();
-      await redis.del(`rt:${user._id}`);
+      redis.del(`rt:${user._id}`)
+        .catch(err => console.warn("Redis session cleanup failed:", err.message));
     } catch (redisErr) {
       console.warn("Redis session cleanup failed:", redisErr.message);
     }

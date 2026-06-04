@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Check, Loader2, ArrowRight, Upload } from 'lucide-react'
+import { Camera, Check, Loader2, ArrowRight, Upload, RefreshCw } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { userAPI } from '../services/api'
 
@@ -16,8 +16,6 @@ function generateAvatars() {
   }))
 }
 
-const avatars = generateAvatars()
-
 export default function AvatarPicker() {
   const navigate = useNavigate()
   const { user, fetchUser } = useAuth()
@@ -26,7 +24,19 @@ export default function AvatarPicker() {
   const [error, setError] = useState('')
   const [customPreview, setCustomPreview] = useState(null)
   const [customFile, setCustomFile] = useState(null)
+  const [avatars, setAvatars] = useState(() => generateAvatars())
   const fileRef = useRef(null)
+
+  const refreshAvatars = () => {
+    const newSeeds = Array.from({ length: 10 }, () => Math.random().toString(36).substring(2, 8))
+    setAvatars(newSeeds.map((seed, i) => ({
+      id: `${DICEBEAR_STYLES[i]}-${seed}`,
+      url: `https://api.dicebear.com/9.x/${DICEBEAR_STYLES[i]}/svg?seed=${seed}`,
+      style: DICEBEAR_STYLES[i],
+      seed,
+    })))
+    setSelected(null)
+  }
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
@@ -90,6 +100,15 @@ export default function AvatarPicker() {
         </div>
 
         {/* Avatar grid */}
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs text-on-surface-variant">Choose from generated avatars</p>
+          <button
+            onClick={refreshAvatars}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Refresh
+          </button>
+        </div>
         <div className="grid grid-cols-5 gap-3 mb-6">
           {avatars.map((avatar) => (
             <button

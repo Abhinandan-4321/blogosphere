@@ -22,6 +22,7 @@ export const NOTIFICATION_TYPES = {
   APPROVAL: "approval",
   CHAT_MESSAGE: "chat_message",
   COFFEE_RECEIVED: "coffee_received",
+  POST_FLAGGED: "post_flagged",
 };
 
 export const OTP_METHODS = {

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   getConversations,
+  getHiddenConversations,
   getOrCreateConversation,
   getMessages,
   sendMessage,
@@ -21,6 +22,7 @@ const router = Router();
 
 router.get("/mutual", authenticate, getMutualFollowers);
 router.get("/", authenticate, getConversations);
+router.get("/hidden", authenticate, getHiddenConversations);
 router.post("/", authenticate, getOrCreateConversation);
 router.get("/:id/messages", authenticate, getMessages);
 router.post("/:id/messages", authenticate, sendMessage);

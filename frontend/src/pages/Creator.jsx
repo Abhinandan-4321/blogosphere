@@ -4,7 +4,7 @@ import {
   Bold, Italic, List, Link2, ImageIcon, ChevronDown, X, Check, Loader2,
   Heading1, Heading2, Heading3, Quote, Code, Strikethrough, ListOrdered,
   Minus, AlignLeft, AlignCenter, AlignRight, Upload, Table, Underline as UnderlineIcon,
-  Undo2, Redo2
+  Undo2, Redo2, Sparkles
 } from 'lucide-react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -17,7 +17,7 @@ import { Table as TableExt } from '@tiptap/extension-table'
 import { TableRow } from '@tiptap/extension-table-row'
 import { TableCell } from '@tiptap/extension-table-cell'
 import { TableHeader } from '@tiptap/extension-table-header'
-import { blogAPI, draftAPI, uploadAPI } from '../services/api'
+import { blogAPI, draftAPI, uploadAPI, aiAPI } from '../services/api'
 import { saveDraft, getSocket } from '../services/socket'
 import AIWritingAssistant from '../components/AIWritingAssistant'
 
@@ -53,6 +53,13 @@ export default function Creator() {
   const [showImageDialog, setShowImageDialog] = useState(false)
   const [imageWidth, setImageWidth] = useState('100')
   const [imageAlign, setImageAlign] = useState('center')
+  const [selectedImageNode, setSelectedImageNode] = useState(null)
+  const [editImageWidth, setEditImageWidth] = useState('100')
+  const [editImageAlign, setEditImageAlign] = useState('center')
+  const [showAiImageDialog, setShowAiImageDialog] = useState(false)
+  const [aiImagePrompt, setAiImagePrompt] = useState('')
+  const [aiImageLoading, setAiImageLoading] = useState(false)
+  const [aiImagePreview, setAiImagePreview] = useState(null)
   const autoSaveTimer = useRef(null)
   const currentDraftId = useRef(draftId || null)
   const imageInputRef = useRef(null)
@@ -228,6 +235,37 @@ export default function Creator() {
     }
   }
 
+  // Detect when an image node is selected in the editor
+  useEffect(() => {
+    if (!editor) return
+    const handleSelectionUpdate = () => {
+      const { state } = editor
+      const { from } = state.selection
+      const node = state.doc.nodeAt(from)
+      if (node?.type.name === 'image') {
+        setSelectedImageNode({ pos: from, attrs: node.attrs })
+        const style = node.attrs.style || ''
+        const widthMatch = style.match(/width:\s*(\d+)%/)
+        setEditImageWidth(widthMatch ? widthMatch[1] : '100')
+        if (style.includes('0 0 0 auto')) setEditImageAlign('right')
+        else if (style.includes('0 auto')) setEditImageAlign('center')
+        else setEditImageAlign('left')
+      } else {
+        setSelectedImageNode(null)
+      }
+    }
+    editor.on('selectionUpdate', handleSelectionUpdate)
+    return () => editor.off('selectionUpdate', handleSelectionUpdate)
+  }, [editor])
+
+  const applyImageEdit = () => {
+    if (!editor || !selectedImageNode) return
+    const widthPx = editImageWidth === '100' ? '' : `${editImageWidth}%`
+    const style = `display:block;margin:${editImageAlign === 'center' ? '0 auto' : editImageAlign === 'right' ? '0 0 0 auto' : '0'};${widthPx ? `width:${widthPx};` : ''}`
+    editor.chain().focus().updateAttributes('image', { width: widthPx || null, style }).run()
+    setSelectedImageNode(null)
+  }
+
   if (!editor) return null
 
   return (
@@ -296,6 +334,67 @@ export default function Creator() {
                   </button>
                 </div>
                 <input ref={imageInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+              </div>
+            )}
+          </div>
+          <div className="relative">
+            <ToolbarBtn icon={<Sparkles className="h-4 w-4" />} onClick={() => { setShowAiImageDialog(!showAiImageDialog); setShowImageDialog(false) }} title="AI Image Generator" />
+            {showAiImageDialog && (
+              <div className="popup-enter absolute left-0 top-10 z-20 w-80 rounded-xl border border-outline-variant/30 bg-surface-container-low p-4 shadow-xl">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-semibold text-on-surface flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5 text-primary" /> AI Image Generator</p>
+                  <button onClick={() => setShowAiImageDialog(false)} className="text-on-surface-variant hover:text-on-surface"><X className="h-3.5 w-3.5" /></button>
+                </div>
+                <p className="text-[10px] text-on-surface-variant mb-2">Describe the image you want. 4 generations per day.</p>
+                <textarea
+                  value={aiImagePrompt}
+                  onChange={e => setAiImagePrompt(e.target.value)}
+                  placeholder="A serene mountain landscape at sunset with soft pastel colors..."
+                  className="w-full rounded-lg border border-outline-variant/30 bg-surface px-3 py-2 text-xs text-on-surface outline-none placeholder-on-surface-variant/50 focus:border-primary resize-none"
+                  rows={3}
+                  maxLength={500}
+                />
+                {aiImagePreview && (
+                  <div className="mt-2 rounded-lg overflow-hidden border border-outline-variant/20">
+                    <img src={aiImagePreview} alt="AI Generated" className="w-full h-32 object-cover" />
+                  </div>
+                )}
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={async () => {
+                      if (!aiImagePrompt.trim()) return
+                      setAiImageLoading(true)
+                      try {
+                        const { data } = await aiAPI.generateImage(aiImagePrompt.trim())
+                        const url = data.data.imageUrl
+                        setAiImagePreview(url)
+                      } catch (err) {
+                        setError(err.response?.data?.message || 'Failed to generate image')
+                      } finally {
+                        setAiImageLoading(false)
+                      }
+                    }}
+                    disabled={!aiImagePrompt.trim() || aiImageLoading}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-medium text-on-primary hover:bg-primary-container hover:text-on-primary-container disabled:opacity-40"
+                  >
+                    {aiImageLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                    {aiImageLoading ? 'Generating…' : 'Generate'}
+                  </button>
+                  {aiImagePreview && (
+                    <button
+                      onClick={() => {
+                        if (!editor || !aiImagePreview) return
+                        editor.chain().focus().setImage({ src: aiImagePreview }).run()
+                        setShowAiImageDialog(false)
+                        setAiImagePrompt('')
+                        setAiImagePreview(null)
+                      }}
+                      className="flex-1 rounded-xl border border-outline-variant/30 px-3 py-2 text-xs font-medium text-on-surface-variant hover:bg-surface-container-high"
+                    >
+                      Insert
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -396,7 +495,36 @@ export default function Creator() {
           />
 
           {/* TipTap Editor */}
-          <EditorContent editor={editor} />
+          <div className="relative">
+            <EditorContent editor={editor} />
+            {selectedImageNode && (
+              <div className="popup-enter absolute left-1/2 -translate-x-1/2 top-0 z-20 w-72 rounded-xl border border-outline-variant/30 bg-surface-container-low p-4 shadow-xl mt-2">
+                <p className="mb-3 text-xs font-semibold text-on-surface">Edit Image</p>
+                <div className="mb-3 space-y-1">
+                  <label className="block text-xs text-on-surface-variant">Width ({editImageWidth}%)</label>
+                  <input type="range" min="25" max="100" step="5" value={editImageWidth} onChange={e => setEditImageWidth(e.target.value)} className="w-full accent-primary" />
+                </div>
+                <div className="mb-3">
+                  <label className="block text-xs text-on-surface-variant mb-1">Alignment</label>
+                  <div className="flex gap-1">
+                    {['left', 'center', 'right'].map(a => (
+                      <button key={a} onClick={() => setEditImageAlign(a)}
+                        className={`rounded-lg px-3 py-1 text-xs capitalize transition ${editImageAlign === a ? 'bg-primary text-on-primary' : 'bg-surface-container-high text-on-surface-variant hover:bg-surface-variant'}`}
+                      >{a}</button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={applyImageEdit} className="flex-1 rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-on-primary hover:bg-primary-container hover:text-on-primary-container">
+                    Apply
+                  </button>
+                  <button onClick={() => setSelectedImageNode(null)} className="flex-1 rounded-xl border border-outline-variant/30 px-3 py-1.5 text-xs font-medium text-on-surface-variant hover:bg-surface-container-high">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

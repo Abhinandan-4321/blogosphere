@@ -28,6 +28,7 @@ Blogosphere is a full-stack, AI-powered blogging platform built with the MERN st
 - **Smart Tag Suggestions** - AI suggests relevant tags based on blog content and title
 - **Quick Actions** - Pre-configured prompts: Summarize, Key Takeaways, Simplify, Quiz Me, Related Topics
 - **Context-Aware** - AI understands the full article content for accurate, relevant answers
+- **AI Image Generator** - Generate images with Pollinations.ai; 4 generations per 24 hours with retry logic
 - **Rate Limited** - 10 AI requests per user per 15 minutes to prevent abuse
 
 ### ✍️ Writing & Editor
@@ -35,6 +36,8 @@ Blogosphere is a full-stack, AI-powered blogging platform built with the MERN st
 - **Complete Toolbar** - Headings (H1–H3), bold, italic, underline, strikethrough, inline code, blockquote, bullet/ordered lists, code blocks, tables, links, and horizontal rules
 - **Draft Autosave** - Drafts save automatically with clear status indicator ("Saving…", "Saved X min ago")
 - **Cover Image Upload** - Cloudinary integration for optimized cover images
+- **Editable Image Properties** - Adjust image width and alignment after insertion with floating editor
+- **AI Image Generation** - Generate images directly in editor with Pollinations.ai
 - **Tags & Categories** - Organize with custom tags and 6 categories (Technology, Lifestyle, Travel, Food, Design, General)
 - **Reading Time** - Automatically calculated based on word count
 - **Scrollable Editor** - Editor and toolbar contained in a fixed-height scrollable box; content never goes behind navbar
@@ -42,18 +45,21 @@ Blogosphere is a full-stack, AI-powered blogging platform built with the MERN st
 ### 📖 Reading Experience
 - **Clean Article View** - Distraction-free reading with beautiful typography
 - **AI Chat Panel** - Ask AI anything about the article without leaving the page
+- **Multilingual Translation** - Translate articles to 12+ languages with preserved HTML formatting
 - **Like & Bookmark** - Save articles to custom folders for later reading
 - **Comment System** - Engage with authors and readers
 - **Share** - Native share functionality
 - **Author Bio** - Author info and follow button on every article
+- **Enhanced Feed Cards** - Improved visual depth with shadows, hover effects, and better hierarchy
 
 ### 👥 Social Features
 - **User Profiles** - Customizable profiles with bio, avatar, and stats
-- **50+ Unique Avatars** - Diverse avatar picker
+- **50+ Unique Avatars** - Diverse avatar picker with refresh button for new variations
+- **Avatar Fallback** - Google avatar with initials fallback for graceful degradation
 - **Follow System** - Follow writers; accurate follower/following counts
 - **Real-time Messaging** - Chat with mutual followers using Socket.io
 - **Collaborative Whiteboard** - Draw and brainstorm together in real-time
-- **Notifications** - Real-time alerts for likes, comments, follows, and donations
+- **Notifications** - Real-time alerts for likes, comments, follows, donations, and moderation flags
 - **User Discovery** - Find and connect with other writers
 
 ### 💰 Monetization
@@ -112,6 +118,7 @@ Blogosphere is a full-stack, AI-powered blogging platform built with the MERN st
 - **Multer** - File upload handling
 - **Bcrypt** - Password hashing
 - **Express Rate Limit** - API and AI rate limiting
+- **Node Cron** - Scheduled tasks (auto-delete flagged posts)
 
 ### DevOps & Tools
 - **Nodemon** - Auto-restart in development
@@ -356,10 +363,20 @@ blogosphere/
 - Content moderation
 - Platform statistics and recent activity
 
+### 🛡️ Content Moderation System
+- **Post Flagging** - Super admins can flag posts with detailed reasons
+- **2-Day Deadline** - Authors get 2 days to delete flagged posts
+- **Persistent Notifications** - Flagged notifications cannot be dismissed until post is deleted
+- **Auto-Deletion** - Cron job automatically deletes expired flagged posts after 2 days
+- **Author Notification** - Clear notification banner on flagged posts with deadline
+- **Non-Dismissible Alerts** - Flagged notifications remain visible in notification center with "Required Action" badge
+- **Moderation Logging** - Track which admin flagged posts and when
+
 ### Notification System
-- Real-time alerts for: new followers, likes, comments, donations, admin approvals
+- Real-time alerts for: new followers, likes, comments, donations, admin approvals, moderation flags
 - Unread count badge
-- Mark individual or all as read
+- Mark individual or all as read (flagged notifications excluded from clear all)
+- Non-dismissible flagged post notifications
 
 ---
 
@@ -408,6 +425,7 @@ blogosphere/
 - `POST /api/ai/writing-assist` - Writing assistant (editor)
 - `POST /api/ai/suggest-tags` - Auto-suggest tags
 - `POST /api/ai/blog-chat` - Chat with AI about a blog
+- `POST /api/ai/generate-image` - Generate images with Pollinations.ai (4/day limit)
 
 ### Payments
 - `POST /api/payments/create-order` - Create Razorpay order
@@ -429,6 +447,11 @@ blogosphere/
 - `GET /api/notifications/unread-count` - Unread count
 - `PUT /api/notifications/:id/read` - Mark as read
 - `PUT /api/notifications/read-all` - Mark all as read
+- `DELETE /api/notifications/:id` - Delete notification
+
+### Admin Moderation
+- `POST /api/admin/blogs/:id/flag` - Flag post for moderation (super admin only)
+- `DELETE /api/admin/blogs/:id/flag` - Unflag post (super admin only)
 
 ---
 
@@ -466,7 +489,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔮 Future Enhancements
 
-- [ ] AI-generated cover images (DALL-E / Stable Diffusion)
+- [x] AI-generated images (Pollinations.ai)
+- [x] Multilingual blog translation
+- [x] Content moderation system
+- [x] Avatar picker refresh
+- [x] Enhanced feed UI with depth
 - [ ] AI content recommendations (personalized feed)
 - [ ] Blog post scheduling
 - [ ] Email notifications for followers and comments
@@ -475,7 +502,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] Export to PDF/Markdown
 - [ ] Dark mode toggle
 - [ ] Blog analytics (views, read time, engagement)
-- [ ] Multi-language support
+- [ ] Advanced moderation dashboard
 
 ---
 
@@ -504,11 +531,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📊 Project Stats
 
-- **Lines of Code**: 18,000+
-- **React Components**: 35+
-- **API Endpoints**: 55+
-- **Features**: 50+
-- **AI Actions**: 8 (3 routes, 5 writing actions)
+- **Lines of Code**: 20,000+
+- **React Components**: 40+
+- **API Endpoints**: 60+
+- **Features**: 60+
+- **AI Actions**: 9 (4 routes, 5 writing actions)
+- **Cron Jobs**: 1 (auto-delete flagged posts)
+- **Supported Languages**: 12+ (translation)
 
 ---
 

@@ -25,10 +25,10 @@ export default function LikedPosts() {
   useEffect(() => { fetchLiked() }, [fetchLiked])
 
   return (
-    <div className="px-6 py-2">
+    <div className="px-3 sm:px-6 py-2">
       <div className="mx-auto max-w-5xl">
         <PageTabs />
-        <h1 className="font-headline text-3xl font-semibold tracking-tight text-on-surface">Liked Posts</h1>
+        <h1 className="font-headline text-2xl sm:text-3xl font-semibold tracking-tight text-on-surface">Liked Posts</h1>
         <p className="mt-2 text-sm leading-relaxed text-on-surface-variant">
           Stories you've appreciated with a like. Show some love to great writing.
         </p>
@@ -49,9 +49,9 @@ export default function LikedPosts() {
         ) : (
           <div className="mt-8 space-y-6">
             {blogs.map(blog => (
-              <article key={blog._id} className="flex gap-5 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-5 transition hover:border-outline-variant/40">
+              <article key={blog._id} className="flex gap-3 sm:gap-5 rounded-2xl border border-outline-variant/20 bg-surface-container-low p-3 sm:p-5 transition hover:border-outline-variant/40">
                 {blog.coverImage && (
-                  <div className="h-20 w-28 flex-shrink-0 overflow-hidden rounded-xl bg-surface-container">
+                  <div className="h-16 w-20 sm:h-20 sm:w-28 flex-shrink-0 overflow-hidden rounded-xl bg-surface-container">
                     <img src={blog.coverImage} alt={blog.title} className="h-full w-full object-cover" />
                   </div>
                 )}

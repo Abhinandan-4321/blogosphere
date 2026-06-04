@@ -99,7 +99,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-12">
+    <div className="mx-auto max-w-4xl px-3 sm:px-6 py-8 sm:py-12">
       {/* Profile Header */}
       <div className="flex flex-col items-center text-center mb-10">
         <div className="h-24 w-24 rounded-full bg-surface-container-high flex items-center justify-center text-3xl font-semibold text-on-surface-variant overflow-hidden mb-4">
@@ -115,7 +115,7 @@ export default function Profile() {
         )}
 
         {/* Stats */}
-        <div className="mt-4 flex items-center gap-6 text-sm text-on-surface-variant">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm text-on-surface-variant">
           <div className="flex items-center gap-1.5">
             <BookOpen className="h-4 w-4" />
             <span className="font-medium text-on-surface">{blogs.length}</span> posts
@@ -172,12 +172,12 @@ export default function Profile() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 border-b border-outline-variant/20 mb-8">
+      <div className="flex gap-1 border-b border-outline-variant/20 mb-8 overflow-x-auto">
         {['posts', 'supporters', 'followers', 'following'].map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2.5 text-sm font-medium capitalize transition ${
+            className={`px-3 sm:px-4 py-2.5 text-sm font-medium capitalize transition whitespace-nowrap ${
               activeTab === tab
                 ? 'border-b-2 border-primary text-on-surface'
                 : 'text-on-surface-variant hover:text-on-surface'

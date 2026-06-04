@@ -167,6 +167,7 @@ export const bookmarkAPI = {
 export const chatAPI = {
   getMutualFollowers: () => api.get('/conversations/mutual'),
   getConversations: () => api.get('/conversations'),
+  getHiddenConversations: () => api.get('/conversations/hidden'),
   getOrCreate: (userId) => api.post('/conversations', { userId }),
   getMessages: (convId, params) => api.get(`/conversations/${convId}/messages`, { params }),
   sendMessage: (convId, content) => api.post(`/conversations/${convId}/messages`, { content }),
@@ -209,6 +210,7 @@ export const aiAPI = {
   writingAssist: (data) => api.post('/ai/writing-assist', data),
   suggestTags: (data) => api.post('/ai/suggest-tags', data),
   blogChat: (data) => api.post('/ai/blog-chat', data),
+  generateImage: (prompt) => api.post('/ai/generate-image', { prompt }),
 }
 
 // ────────── Admin ──────────
@@ -219,6 +221,8 @@ export const adminAPI = {
   changeRole: (id, role) => api.patch(`/admin/users/${id}/role`, { role }),
   deleteUser: (id) => api.delete(`/admin/users/${id}`),
   deleteBlog: (id) => api.delete(`/admin/blogs/${id}`),
+  flagPost: (id, reason) => api.post(`/admin/blogs/${id}/flag`, { reason }),
+  unflagPost: (id) => api.delete(`/admin/blogs/${id}/flag`),
 }
 
 export default api

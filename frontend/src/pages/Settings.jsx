@@ -1,16 +1,19 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Camera, Loader2, Lock, User as UserIcon, Trash2, Check } from 'lucide-react'
+import { ArrowLeft, Camera, Loader2, Lock, User as UserIcon, Trash2, Check, RefreshCw } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { userAPI } from '../services/api'
 import { showToast } from '../utils/toast'
 
 const DICEBEAR_STYLES = ['adventurer', 'avataaars', 'big-ears', 'bottts', 'fun-emoji', 'lorelei', 'micah', 'miniavs', 'notionists', 'thumbs']
-const SEEDS = ['Felix', 'Luna', 'Mia', 'Oliver', 'Charlie', 'Nala', 'Oscar', 'Willow', 'Leo', 'Daisy']
-const PRESET_AVATARS = SEEDS.map((seed, i) => ({
-  id: `${DICEBEAR_STYLES[i]}-${seed}`,
-  url: `https://api.dicebear.com/9.x/${DICEBEAR_STYLES[i]}/svg?seed=${seed}`,
-}))
+
+function generateAvatars() {
+  const SEEDS = ['Felix', 'Luna', 'Mia', 'Oliver', 'Charlie', 'Nala', 'Oscar', 'Willow', 'Leo', 'Daisy']
+  return SEEDS.map((seed, i) => ({
+    id: `${DICEBEAR_STYLES[i]}-${seed}`,
+    url: `https://api.dicebear.com/9.x/${DICEBEAR_STYLES[i]}/svg?seed=${seed}`,
+  }))
+}
 
 export default function Settings() {
   const { user, fetchUser } = useAuth()
@@ -26,6 +29,7 @@ export default function Settings() {
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(user?.avatar || '')
   const [avatarSaving, setAvatarSaving] = useState(false)
+  const [presetAvatars, setPresetAvatars] = useState(() => generateAvatars())
 
   // Password state
   const [currentPassword, setCurrentPassword] = useState('')
@@ -73,6 +77,14 @@ export default function Settings() {
     } finally {
       setAvatarSaving(false)
     }
+  }
+
+  const refreshAvatars = () => {
+    const newSeeds = Array.from({ length: 10 }, () => Math.random().toString(36).substring(2, 8))
+    setPresetAvatars(newSeeds.map((seed, i) => ({
+      id: `${DICEBEAR_STYLES[i]}-${seed}`,
+      url: `https://api.dicebear.com/9.x/${DICEBEAR_STYLES[i]}/svg?seed=${seed}`,
+    })))
   }
 
   const handlePresetAvatar = async (url) => {
@@ -179,9 +191,17 @@ export default function Settings() {
 
           {/* Preset Avatars */}
           <div>
-            <label className="mb-2 block text-xs font-medium text-on-surface-variant">Or choose a preset avatar</label>
+            <div className="mb-3 flex items-center justify-between">
+              <label className="text-xs font-medium text-on-surface-variant">Or choose a preset avatar</label>
+              <button
+                onClick={refreshAvatars}
+                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> Refresh
+              </button>
+            </div>
             <div className="grid grid-cols-5 gap-2">
-              {PRESET_AVATARS.map((avatar) => (
+              {presetAvatars.map((avatar) => (
                 <button
                   key={avatar.id}
                   onClick={() => handlePresetAvatar(avatar.url)}

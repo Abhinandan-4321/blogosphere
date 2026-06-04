@@ -83,16 +83,16 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="px-4 sm:px-6 py-2">
+    <div className="px-3 sm:px-6 py-2">
       <div className="mx-auto max-w-5xl">
         <PageTabs />
         {loading ? (
           <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-on-surface-variant" /></div>
         ) : (
         <>
-        <div className="mb-6 flex items-start justify-between">
+        <div className="mb-6 flex flex-col sm:flex-row items-start justify-between gap-3">
           <div>
-            <h1 className="font-headline text-3xl font-semibold tracking-tight text-on-surface">Welcome back, {user?.name?.split(' ')[0] || 'Editor'}.</h1>
+            <h1 className="font-headline text-2xl sm:text-3xl font-semibold tracking-tight text-on-surface">Welcome back, {user?.name?.split(' ')[0] || 'Editor'}.</h1>
             <p className="mt-1 text-sm text-on-surface-variant">Here is a summary of your recent literary endeavors.</p>
           </div>
           <Link
@@ -110,7 +110,7 @@ export default function Dashboard() {
           <StatCard icon={Bell} label="Notifications" value={unreadCount} sub="unread" />
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-3">
+        <div className="grid gap-6 lg:gap-8 lg:grid-cols-3">
           {/* Recent Drafts */}
           <div className="lg:col-span-2">
             <div className="mb-4 flex items-center justify-between">
@@ -123,16 +123,16 @@ export default function Dashboard() {
               {drafts.length === 0 ? (
                 <p className="rounded-2xl border border-dashed border-outline-variant/30 p-6 text-center text-sm text-on-surface-variant">No drafts yet. Start writing!</p>
               ) : drafts.map(draft => (
-                <div key={draft._id} className="flex items-center justify-between rounded-2xl border border-outline-variant/20 bg-surface-container-low p-4 transition hover:border-outline-variant/40">
+                <div key={draft._id} className="flex items-center justify-between rounded-2xl border border-outline-variant/20 bg-surface-container-low p-3 sm:p-4 transition hover:border-outline-variant/40">
                   <Link to={`/create?draft=${draft._id}`} className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-on-surface truncate">{draft.title || 'Untitled Draft'}</p>
                     <p className="mt-0.5 flex items-center gap-1 text-xs text-on-surface-variant">
-                      <Clock className="h-3 w-3" />
+                      <Clock className="h-3 w-3 flex-shrink-0" />
                       Saved {new Date(draft.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </p>
                   </Link>
-                  <div className="ml-4 flex flex-shrink-0 items-center gap-2">
-                    <span className="rounded-full bg-surface-container-high px-2.5 py-0.5 text-xs text-on-surface-variant capitalize">{draft.category}</span>
+                  <div className="ml-2 sm:ml-4 flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
+                    <span className="hidden sm:inline rounded-full bg-surface-container-high px-2.5 py-0.5 text-xs text-on-surface-variant capitalize">{draft.category}</span>
                     <button
                       onClick={() => setDeleteTarget({ type: 'draft', id: draft._id, title: draft.title || 'Untitled draft' })}
                       className="rounded-md p-1 text-on-surface-variant hover:bg-error-container/30 hover:text-error transition"
@@ -156,13 +156,13 @@ export default function Dashboard() {
               {userBlogs.length === 0 ? (
                 <p className="px-4 py-6 text-center text-sm text-on-surface-variant">No published stories yet.</p>
               ) : userBlogs.map(blog => (
-                <div key={blog._id} className="flex items-center justify-between px-4 py-3 group">
+                <div key={blog._id} className="flex items-center justify-between px-3 sm:px-4 py-3 group">
                   <Link to={`/blog/${blog.slug || blog._id}`} className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-on-surface truncate group-hover:text-primary transition">{blog.title}</p>
                     <p className="text-xs text-on-surface-variant">{blog.likesCount || 0} likes · {blog.commentsCount || 0} comments</p>
                   </Link>
-                  <div className="ml-4 flex flex-shrink-0 items-center gap-2">
-                    <span className="text-xs text-on-surface-variant">
+                  <div className="ml-2 sm:ml-4 flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
+                    <span className="hidden sm:inline text-xs text-on-surface-variant">
                       {new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </span>
                     <button

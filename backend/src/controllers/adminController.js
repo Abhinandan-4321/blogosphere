@@ -217,6 +217,100 @@ export const deleteAnyBlog = async (req, res, next) => {
   }
 };
 
+// @desc    Flag a blog post (super admin only)
+// @route   POST /api/admin/blogs/:id/flag
+export const flagPost = async (req, res, next) => {
+  try {
+    const { reason } = req.body;
+    const blogId = req.params.id;
+
+    if (!reason || !reason.trim()) {
+      return sendError(res, 400, "Flag reason is required");
+    }
+
+    const blog = await Blog.findById(blogId).populate("author", "name email");
+    if (!blog) {
+      return sendError(res, 404, "Blog not found");
+    }
+
+    if (blog.flagged) {
+      return sendError(res, 400, "Blog is already flagged");
+    }
+
+    // Set flag with 2-day deadline
+    const flaggedAt = new Date();
+    const deletionDeadline = new Date(flaggedAt.getTime() + 2 * 24 * 60 * 60 * 1000); // 2 days
+
+    blog.flagged = true;
+    blog.flagReason = reason.trim();
+    blog.flaggedBy = req.user._id;
+    blog.flaggedAt = flaggedAt;
+    blog.deletionDeadline = deletionDeadline;
+    await blog.save();
+
+    // Create persistent notification for the author
+    await createNotification({
+      recipient: blog.author._id,
+      type: NOTIFICATION_TYPES.POST_FLAGGED,
+      message: `Your post "${blog.title}" has been flagged and must be deleted within 2 days or it will be automatically removed.`,
+      relatedBlog: blog._id,
+      relatedUser: req.user._id,
+      metadata: {
+        reason: reason.trim(),
+        deadline: deletionDeadline.toISOString(),
+        canDismiss: false,
+      },
+    });
+
+    await deleteCachePattern("blogs:*");
+
+    return sendSuccess(res, 200, "Blog post flagged successfully", {
+      blogId: blog._id,
+      flagReason: blog.flagReason,
+      deletionDeadline: blog.deletionDeadline,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Unflag a blog post (super admin only)
+// @route   DELETE /api/admin/blogs/:id/flag
+export const unflagPost = async (req, res, next) => {
+  try {
+    const blogId = req.params.id;
+
+    const blog = await Blog.findById(blogId);
+    if (!blog) {
+      return sendError(res, 404, "Blog not found");
+    }
+
+    if (!blog.flagged) {
+      return sendError(res, 400, "Blog is not flagged");
+    }
+
+    // Remove flag
+    blog.flagged = false;
+    blog.flagReason = "";
+    blog.flaggedBy = null;
+    blog.flaggedAt = null;
+    blog.deletionDeadline = null;
+    await blog.save();
+
+    // Remove the flag notification
+    await Notification.deleteMany({
+      relatedBlog: blog._id,
+      type: NOTIFICATION_TYPES.POST_FLAGGED,
+    });
+
+    await deleteCachePattern("blogs:*");
+
+    return sendSuccess(res, 200, "Blog post unflagged successfully");
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Admin dashboard stats
 // @route   GET /api/admin/dashboard
 export const getDashboardStats = async (req, res, next) => {

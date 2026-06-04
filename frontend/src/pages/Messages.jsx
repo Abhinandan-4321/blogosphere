@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
-import { Send, ImageIcon, ArrowLeft, Loader2, MessageCircle, Search, Check, CheckCheck, Pencil, PenTool, EyeOff, AlertCircle } from 'lucide-react'
+import { Send, ImageIcon, ArrowLeft, Loader2, MessageCircle, Search, Check, CheckCheck, Pencil, PenTool, EyeOff, Eye, AlertCircle, ChevronDown } from 'lucide-react'
 import CollabWhiteboard from '../components/CollabWhiteboard'
 import { chatAPI } from '../services/api'
 import { useAuth } from '../context/AuthContext'
@@ -54,6 +54,9 @@ export default function Messages() {
   const [showNewChat, setShowNewChat] = useState(false)
   const [mutualSearch, setMutualSearch] = useState('')
   const [activeWhiteboard, setActiveWhiteboard] = useState(null)
+  const [hiddenConvs, setHiddenConvs] = useState([])
+  const [showHidden, setShowHidden] = useState(false)
+  const [hiddenLoading, setHiddenLoading] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -314,6 +317,33 @@ export default function Messages() {
     return conv.lastMessage.content?.substring(0, 40) || ''
   }
 
+  const toggleHiddenConvs = async () => {
+    if (showHidden) {
+      setShowHidden(false)
+      return
+    }
+    setHiddenLoading(true)
+    try {
+      const { data } = await chatAPI.getHiddenConversations()
+      setHiddenConvs(data.data || [])
+    } catch {} finally {
+      setHiddenLoading(false)
+    }
+    setShowHidden(true)
+  }
+
+  const handleUnhideConversation = async (convId) => {
+    try {
+      await chatAPI.unhideConversation(convId)
+      const conv = hiddenConvs.find(c => c._id === convId)
+      setHiddenConvs(prev => prev.filter(c => c._id !== convId))
+      if (conv) setConversations(prev => [conv, ...prev])
+      showToast.success('Conversation restored')
+    } catch {
+      showToast.error('Failed to unhide conversation')
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex h-[calc(100vh-7rem)] items-center justify-center">
@@ -323,9 +353,9 @@ export default function Messages() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-7rem)] rounded-2xl border border-outline-variant/20 mx-6 overflow-hidden bg-surface-container-low">
+    <div className="flex h-[calc(100vh-7rem)] rounded-2xl border border-outline-variant/20 mx-3 sm:mx-6 overflow-hidden bg-surface-container-low shadow-sm">
       {/* Sidebar: Conversation List */}
-      <aside className={`flex flex-col border-r border-outline-variant/20 bg-surface-container-low ${activeConvId ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 flex-shrink-0`}>
+      <aside className={`flex flex-col border-r border-outline-variant/20 bg-surface-container-low shadow-[1px_0_4px_rgba(0,0,0,0.04)] ${activeConvId ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 flex-shrink-0`}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-outline-variant/20 bg-gradient-to-r from-surface-container-low to-surface-container px-5 py-4">
           <h1 className="text-lg font-semibold tracking-tight text-on-surface">Messages</h1>
@@ -437,6 +467,47 @@ export default function Messages() {
                 </button>
               </div>
             ))
+          )}
+        </div>
+
+        {/* Hidden Conversations Toggle */}
+        <div className="border-t border-outline-variant/20">
+          <button
+            onClick={toggleHiddenConvs}
+            className="flex w-full items-center justify-between px-5 py-3 text-xs font-medium text-on-surface-variant transition hover:bg-surface-container-high/50"
+          >
+            <span className="flex items-center gap-2">
+              <EyeOff className="h-3.5 w-3.5" /> Hidden Conversations
+              {hiddenConvs.length > 0 && showHidden && (
+                <span className="rounded-full bg-surface-container-high px-1.5 py-0.5 text-[9px]">{hiddenConvs.length}</span>
+              )}
+            </span>
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showHidden ? 'rotate-180' : ''}`} />
+          </button>
+          {showHidden && (
+            <div className="max-h-40 overflow-y-auto border-t border-outline-variant/10">
+              {hiddenLoading ? (
+                <div className="flex justify-center py-3"><Loader2 className="h-4 w-4 animate-spin text-on-surface-variant" /></div>
+              ) : hiddenConvs.length === 0 ? (
+                <p className="px-5 py-3 text-xs text-on-surface-variant text-center">No hidden conversations</p>
+              ) : (
+                hiddenConvs.map(conv => (
+                  <div key={conv._id} className="flex items-center gap-3 px-5 py-2.5 hover:bg-surface-container-high/50 transition">
+                    <div className="h-8 w-8 rounded-full bg-surface-container-high flex items-center justify-center text-xs font-medium text-on-surface-variant overflow-hidden flex-shrink-0">
+                      {conv.otherUser?.avatar ? <img src={conv.otherUser.avatar} alt="" className="h-full w-full object-cover" /> : conv.otherUser?.name?.[0]}
+                    </div>
+                    <span className="text-xs text-on-surface-variant truncate flex-1">{conv.otherUser?.name}</span>
+                    <button
+                      onClick={() => handleUnhideConversation(conv._id)}
+                      className="rounded-lg p-1.5 text-on-surface-variant hover:bg-surface-container-high transition"
+                      title="Unhide"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           )}
         </div>
       </aside>

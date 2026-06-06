@@ -63,8 +63,10 @@ export default function Auth({ mode }) {
     try {
       const result = await verifyOtp(otpFlow.userId, otp, otpFlow.method)
       if (result.authenticated) {
-        // New users go to avatar picker; existing users go to feed
-        navigate(result.isNewUser ? '/choose-avatar' : '/feed')
+        // Small delay to ensure user state is set before navigation
+        setTimeout(() => {
+          navigate(result.isNewUser ? '/choose-avatar' : '/feed')
+        }, 100)
       } else {
         setSuccessMsg(result.message || 'Verified! Awaiting admin approval.')
         setOtpFlow(null)

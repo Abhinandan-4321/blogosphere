@@ -105,7 +105,9 @@ export function AuthProvider({ children }) {
     localStorage.setItem('refreshToken', refreshToken)
     localStorage.setItem('lastActiveAt', Date.now().toString())
     await fetchUser()
-  }, [fetchUser])
+    // Return isNewUser flag based on hasPickedAvatar
+    return { isNewUser: !user?.hasPickedAvatar }
+  }, [fetchUser, user])
 
   const value = {
     user,

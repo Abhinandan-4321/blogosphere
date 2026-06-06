@@ -18,8 +18,12 @@ export default function AuthCallback() {
     }
 
     if (accessToken && refreshToken) {
-      handleOAuthCallback(accessToken, refreshToken).then(() => {
-        navigate('/feed', { replace: true })
+      handleOAuthCallback(accessToken, refreshToken).then((result) => {
+        // New users go to avatar picker; existing users go to feed
+        const destination = result?.isNewUser ? '/choose-avatar' : '/feed'
+        setTimeout(() => {
+          navigate(destination, { replace: true })
+        }, 100)
       })
     } else {
       navigate('/login', { replace: true })

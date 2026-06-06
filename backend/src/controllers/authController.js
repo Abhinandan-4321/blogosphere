@@ -79,6 +79,11 @@ export const login = async (req, res, next) => {
       return sendError(res, 401, "Invalid email or password");
     }
 
+    // Check if account is deleted
+    if (user.deletedAt) {
+      return sendError(res, 403, "This account has been deleted and cannot be accessed");
+    }
+
     if (!user.password) {
       return sendError(
         res,

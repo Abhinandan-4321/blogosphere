@@ -15,6 +15,12 @@ export const getMe = async (req, res, next) => {
     const user = await User.findById(req.user._id).select(
       "-resetPasswordToken -resetPasswordExpiry"
     );
+    
+    // Check if account is deleted
+    if (user && user.deletedAt) {
+      return sendError(res, 403, "This account has been deleted and cannot be accessed");
+    }
+    
     return sendSuccess(res, 200, "Profile retrieved", user);
   } catch (error) {
     next(error);

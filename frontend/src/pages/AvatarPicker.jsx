@@ -27,6 +27,12 @@ export default function AvatarPicker() {
   const [avatars, setAvatars] = useState(() => generateAvatars())
   const fileRef = useRef(null)
 
+  // Redirect if user already picked avatar
+  if (user?.hasPickedAvatar) {
+    navigate('/feed', { replace: true })
+    return null
+  }
+
   const refreshAvatars = () => {
     const newSeeds = Array.from({ length: 10 }, () => Math.random().toString(36).substring(2, 8))
     setAvatars(newSeeds.map((seed, i) => ({
@@ -73,9 +79,18 @@ export default function AvatarPicker() {
   const handleSkip = async () => {
     setSaving(true)
     try {
-      // Set a default avatar and mark as picked
-      const defaultAvatar = avatars[0]
-      await userAPI.updateAvatar({ avatarUrl: defaultAvatar.url })
+      // Use Google avatar if available, otherwise use default dicebear
+      let avatarUrl = null
+      if (user?.avatar) {
+        // User already has an avatar (from Google), keep it
+        avatarUrl = user.avatar
+      } else {
+        // Use default dicebear avatar
+        avatarUrl = avatars[0].url
+      }
+      if (avatarUrl) {
+        await userAPI.updateAvatar({ avatarUrl })
+      }
       await fetchUser()
       navigate('/feed')
     } catch {

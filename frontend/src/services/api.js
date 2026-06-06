@@ -223,6 +223,16 @@ export const adminAPI = {
   deleteBlog: (id) => api.delete(`/admin/blogs/${id}`),
   flagPost: (id, reason) => api.post(`/admin/blogs/${id}/flag`, { reason }),
   unflagPost: (id) => api.delete(`/admin/blogs/${id}/flag`),
+  getPendingDeletionRequests: (params) => api.get('/deletion-request/admin/pending', { params }),
+  approveDeletionRequest: (id, approvalReason) => api.post(`/deletion-request/admin/${id}/approve`, { approvalReason }),
+  rejectDeletionRequest: (id, rejectionReason) => api.post(`/deletion-request/admin/${id}/reject`, { rejectionReason }),
+}
+
+// ────────── Deletion Request ──────────
+export const deletionRequestAPI = {
+  requestDeletion: (reason) => api.post('/deletion-request', { reason }),
+  getDeletionRequest: () => api.get('/deletion-request'),
+  cancelDeletionRequest: () => api.delete('/deletion-request'),
 }
 
 export default api

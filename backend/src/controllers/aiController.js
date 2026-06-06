@@ -190,8 +190,36 @@ export const generateImage = async (req, res, next) => {
     const timestamp = Date.now();
     const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=768&nologo=true&seed=${timestamp}`;
     
-    // Just return the URL - the image will be generated when accessed
-    // No need to verify since Pollinations.ai generates images on-the-fly
+    // Verify image can be accessed with a HEAD request
+    let imageAccessible = false;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
+        const response = await fetch(imageUrl, {
+          method: 'HEAD',
+          signal: controller.signal,
+          headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
+        clearTimeout(timeoutId);
+        
+        if (response.ok || response.status === 200) {
+          imageAccessible = true;
+          break;
+        }
+      } catch (err) {
+        console.log(`[AI Image] Verification attempt ${attempt} failed:`, err.message);
+        if (attempt < 3) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+
+    if (!imageAccessible) {
+      return sendError(res, 503, "Image generation service is temporarily unavailable. Please try again.");
+    }
+
     return sendSuccess(res, 200, "Image generated", { imageUrl, prompt: cleanPrompt });
   } catch (error) {
     next(error);

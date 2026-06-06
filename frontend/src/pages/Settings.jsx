@@ -4,6 +4,7 @@ import { ArrowLeft, Camera, Loader2, Lock, User as UserIcon, Trash2, Check, Refr
 import { useAuth } from '../context/AuthContext'
 import { userAPI } from '../services/api'
 import { showToast } from '../utils/toast'
+import DeleteAccountModal from '../components/DeleteAccountModal'
 
 const DICEBEAR_STYLES = ['adventurer', 'avataaars', 'big-ears', 'bottts', 'fun-emoji', 'lorelei', 'micah', 'miniavs', 'notionists', 'thumbs']
 
@@ -18,6 +19,7 @@ function generateAvatars() {
 export default function Settings() {
   const { user, fetchUser } = useAuth()
   const [activeTab, setActiveTab] = useState('profile')
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   // Profile state
   const [name, setName] = useState(user?.name || '')
@@ -319,8 +321,29 @@ export default function Settings() {
               <p><span className="font-medium text-on-surface">Joined:</span> {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}</p>
             </div>
           </div>
+
+          {/* Delete Account */}
+          <div className="border-t border-outline-variant/20 pt-6">
+            <h3 className="text-sm font-semibold text-on-surface mb-2">Danger Zone</h3>
+            <p className="text-xs text-on-surface-variant mb-4">
+              Request account deletion. An admin will review and approve your request.
+            </p>
+            <button
+              onClick={() => setShowDeleteModal(true)}
+              className="flex items-center gap-2 rounded-lg bg-error/10 px-4 py-2 text-sm font-medium text-error hover:bg-error/20 transition"
+            >
+              <Trash2 size={16} />
+              Request Account Deletion
+            </button>
+          </div>
         </div>
       )}
+
+      <DeleteAccountModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onSuccess={() => setShowDeleteModal(false)}
+      />
     </div>
   )
 }

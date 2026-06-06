@@ -17,6 +17,7 @@ import chatRoutes from "./routes/chatRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
+import deletionRequestRoutes from "./routes/deletionRequestRoutes.js";
 
 import errorHandler from "./middlewares/errorHandler.js";
 import { apiLimiter } from "./middlewares/rateLimiter.js";
@@ -70,6 +71,7 @@ app.use("/api/conversations", chatRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/deletion-request", deletionRequestRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

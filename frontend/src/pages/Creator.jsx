@@ -356,7 +356,7 @@ export default function Creator() {
                 />
                 {aiImagePreview && (
                   <div className="mt-2 rounded-lg overflow-hidden border border-outline-variant/20">
-                    <img src={aiImagePreview} alt="AI Generated" className="w-full h-32 object-cover" />
+                    <img src={aiImagePreview} alt="AI Generated" className="w-full h-32 object-cover" crossOrigin="anonymous" />
                   </div>
                 )}
                 <div className="mt-3 flex gap-2">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Loader2, PenSquare, Users, BookOpen } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -21,6 +21,7 @@ export default function Auth({ mode }) {
   const [quoteIdx, setQuoteIdx] = useState(0)
   const { login, register, verifyOtp } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -28,6 +29,12 @@ export default function Auth({ mode }) {
     }, 5000)
     return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    if (searchParams.get('error') === 'account_deleted') {
+      setError('This account has been deleted and cannot be accessed.')
+    }
+  }, [searchParams])
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
@@ -97,7 +104,7 @@ export default function Auth({ mode }) {
           
           {/* Manifesto Content */}
           <div className="z-10 mt-auto mb-8">
-            <h2 className="font-headline text-5xl italic leading-tight mb-6 text-surface">The Digital Atelier</h2>
+            <h2 className="font-headline text-5xl italic leading-tight mb-6 text-surface">The Writer's Circle</h2>
             <p className="font-body text-lg leading-relaxed text-surface/90 max-w-md">
               A curated space for thoughtful writing. We believe in breathing room for ideas, organic pacing, and the enduring power of a well-told story.
             </p>
@@ -150,7 +157,7 @@ export default function Auth({ mode }) {
 
             <div className="mb-8">
               <h1 className="font-headline text-3xl font-normal mb-2">
-                {activeMode === 'login' ? 'Welcome back' : 'Join the Atelier'}
+                {activeMode === 'login' ? 'Welcome back' : 'Join the Circle'}
               </h1>
               <p className="font-body text-on-surface-variant text-sm">
                 {activeMode === 'login' ? 'Enter your details to access your workspace.' : 'Request an invitation to join our community.'}
@@ -182,7 +189,7 @@ export default function Auth({ mode }) {
                   <label className="block font-label text-sm font-medium text-on-surface uppercase tracking-[0.05em]" htmlFor="name">Username</label>
                   <input
                     type="text" name="name" id="name" value={form.name} onChange={handleChange} required
-                    placeholder="e.g. ateliermember"
+                    placeholder="e.g. writercircle"
                     className="w-full bg-surface-container-highest border-none rounded-xl px-4 py-4 text-on-surface placeholder-on-surface-variant/50 focus:ring-0 focus:bg-surface-container-lowest focus:outline focus:outline-1 focus:outline-outline-variant/15 transition-colors shadow-sm"
                   />
                 </div>
@@ -244,7 +251,7 @@ export default function Auth({ mode }) {
 
             <p className="mt-8 text-center font-body text-sm text-on-surface-variant">
               {activeMode === 'login' ? (
-                <>New to the Atelier? <button onClick={() => setActiveMode('register')} className="text-primary hover:text-primary-container font-medium transition-colors underline decoration-primary/30 underline-offset-4">Request an invitation</button></>
+                <>New to the Circle? <button onClick={() => setActiveMode('register')} className="text-primary hover:text-primary-container font-medium transition-colors underline decoration-primary/30 underline-offset-4">Request an invitation</button></>
               ) : (
                 <>Already have an account? <button onClick={() => setActiveMode('login')} className="text-primary hover:text-primary-container font-medium transition-colors underline decoration-primary/30 underline-offset-4">Sign in</button></>
               )}

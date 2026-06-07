@@ -44,10 +44,12 @@ export function AuthProvider({ children }) {
     try {
       const { data } = await userAPI.getMe()
       setUser(data.data)
+      return data.data
     } catch {
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
       setUser(null)
+      return null
     } finally {
       setLoading(false)
     }
@@ -104,10 +106,9 @@ export function AuthProvider({ children }) {
     localStorage.setItem('accessToken', accessToken)
     localStorage.setItem('refreshToken', refreshToken)
     localStorage.setItem('lastActiveAt', Date.now().toString())
-    await fetchUser()
-    // Return isNewUser flag based on hasPickedAvatar
-    return { isNewUser: !user?.hasPickedAvatar }
-  }, [fetchUser, user])
+    const fetchedUser = await fetchUser()
+    return { isNewUser: !fetchedUser?.hasPickedAvatar }
+  }, [fetchUser])
 
   const value = {
     user,

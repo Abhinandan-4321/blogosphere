@@ -83,14 +83,14 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="px-3 sm:px-6 py-2">
+    <div className="px-4 sm:px-6 py-4 sm:py-6">
       <div className="mx-auto max-w-5xl">
         <PageTabs />
         {loading ? (
           <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-on-surface-variant" /></div>
         ) : (
         <>
-        <div className="mb-6 flex flex-col sm:flex-row items-start justify-between gap-3">
+        <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="font-headline text-2xl sm:text-3xl font-semibold tracking-tight text-on-surface">Welcome back, {user?.name?.split(' ')[0] || 'Editor'}.</h1>
             <p className="mt-1 text-sm text-on-surface-variant">Here is a summary of your recent literary endeavors.</p>
@@ -104,15 +104,15 @@ export default function Dashboard() {
         </div>
 
         {/* Stats */}
-        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           <StatCard icon={Users} label="Followers" value={user?.followersCount || 0} />
           <StatCard icon={TrendingUp} label="Published" value={userBlogs.length} sub={`${drafts.length} drafts in progress`} />
           <StatCard icon={Bell} label="Notifications" value={unreadCount} sub="unread" />
         </div>
 
-        <div className="grid gap-6 lg:gap-8 lg:grid-cols-3">
+        <div className="grid gap-6 lg:gap-8 grid-cols-1 lg:grid-cols-[2fr_1fr]">
           {/* Recent Drafts */}
-          <div className="lg:col-span-2">
+          <div className="min-w-0">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-base font-semibold text-on-surface">Recent Drafts</h2>
               <Link to="/drafts" className="flex items-center gap-1 text-xs text-primary transition hover:underline">
@@ -186,7 +186,7 @@ export default function Dashboard() {
           </div>
 
           {/* Notifications + Profile */}
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0">
             {/* Profile card */}
             <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-low p-5">
               <div className="flex items-center gap-3">

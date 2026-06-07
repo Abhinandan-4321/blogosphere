@@ -269,7 +269,7 @@ export default function Landing() {
       <section className="mx-auto grid min-h-screen max-w-6xl grid-cols-1 items-center gap-8 px-6 pt-24 md:grid-cols-2">
         {/* Left: Text */}
         <div className="max-w-lg">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">The Digital Atelier</p>
+          <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-primary">The Writer's Circle</p>
           <h1 className="font-headline text-5xl font-semibold leading-tight tracking-tight md:text-6xl">
             Curate your thoughts.{' '}
             <span className="text-on-surface-variant">Craft your world.</span>

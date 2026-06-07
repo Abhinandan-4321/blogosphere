@@ -25,7 +25,16 @@ export const sendOTP = async (user, method) => {
   }
 
   if (method === OTP_METHODS.EMAIL) {
-    await sendOTPEmail(user.email, otp);
+    try {
+      await sendOTPEmail(user.email, otp);
+    } catch (emailErr) {
+      console.error(`OTP email send failed: ${emailErr.message}`);
+      // In production, OTP is stored in Redis - user can still verify if they received the email
+      // In development, OTP is logged above
+      if (process.env.NODE_ENV === "production") {
+        throw new Error("Failed to send verification email. Please try again later.");
+      }
+    }
   } else if (method === OTP_METHODS.SMS) {
     if (!user.phone) {
       throw new Error("Phone number not registered");

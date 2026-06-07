@@ -16,6 +16,9 @@ const configurePassport = () => {
           let user = await User.findOne({ googleId: profile.id });
 
           if (user) {
+            if (user.deletedAt) {
+              return done(null, false, { message: "This account has been deleted." });
+            }
             return done(null, user);
           }
 
@@ -23,6 +26,9 @@ const configurePassport = () => {
           user = await User.findOne({ email: profile.emails[0].value });
 
           if (user) {
+            if (user.deletedAt) {
+              return done(null, false, { message: "This account has been deleted." });
+            }
             // Link Google account to existing user
             user.googleId = profile.id;
             if (!user.avatar) {

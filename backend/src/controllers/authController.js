@@ -248,7 +248,12 @@ export const googleCallback = async (req, res, next) => {
 
     if (!user) {
       console.error("Google OAuth: No user found in request");
-      return res.redirect(`${process.env.CLIENT_URL}/login?error=auth_failed`);
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=account_deleted`);
+    }
+
+    if (user.deletedAt) {
+      console.error("Google OAuth: Deleted user attempted login:", user.email);
+      return res.redirect(`${process.env.CLIENT_URL}/login?error=account_deleted`);
     }
 
     console.log("Google OAuth success for user:", user.email);

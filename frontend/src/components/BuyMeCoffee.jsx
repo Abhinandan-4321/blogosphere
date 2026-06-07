@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { Coffee, X, Loader2, Heart } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { paymentAPI } from '../services/api'
 import { showToast } from '../utils/toast'
 import { useAuth } from '../context/AuthContext'
 
 const COFFEE_PRICE = 50
 
-export default function BuyMeCoffee({ creator, onSuccess }) {
+export default function BuyMeCoffee({ creator, onSuccess, requireAuth = true }) {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [isOpen, setIsOpen] = useState(false)
   const [coffeeCount, setCoffeeCount] = useState(1)
   const [message, setMessage] = useState('')
@@ -15,13 +17,22 @@ export default function BuyMeCoffee({ creator, onSuccess }) {
   const [isPublic, setIsPublic] = useState(true)
   const [loading, setLoading] = useState(false)
 
+  // Default creator info for Landing page (you can customize this)
+  const defaultCreator = {
+    _id: process.env.VITE_DEFAULT_CREATOR_ID || 'default',
+    name: 'Abhinandan Gupta',
+  }
+
+  const actualCreator = creator || defaultCreator
+
   const handleBuyCoffee = async () => {
     if (!user) {
       showToast.error('Please login to support creators')
+      navigate('/login')
       return
     }
 
-    if (user._id === creator._id) {
+    if (user && creator && user._id === creator._id) {
       showToast.error('You cannot support yourself')
       return
     }
@@ -31,7 +42,7 @@ export default function BuyMeCoffee({ creator, onSuccess }) {
     try {
       // Create order
       const { data: orderData } = await paymentAPI.createOrder({
-        creatorId: creator._id,
+        creatorId: actualCreator._id,
         coffeeCount,
         message: message.trim(),
         isAnonymous,
@@ -50,7 +61,7 @@ export default function BuyMeCoffee({ creator, onSuccess }) {
           amount: orderData.data.amount,
           currency: orderData.data.currency,
           name: 'Blogosphere',
-          description: `${coffeeCount} Coffee${coffeeCount > 1 ? 's' : ''} for ${creator.name}`,
+          description: `${coffeeCount} Coffee${coffeeCount > 1 ? 's' : ''} for ${actualCreator.name}`,
           order_id: orderData.data.orderId,
           handler: async (response) => {
             try {
@@ -73,10 +84,10 @@ export default function BuyMeCoffee({ creator, onSuccess }) {
               setLoading(false)
             }
           },
-          prefill: {
+          prefill: user ? {
             name: user.name,
             email: user.email,
-          },
+          } : {},
           theme: {
             color: '#6B7C59',
           },
@@ -134,7 +145,7 @@ export default function BuyMeCoffee({ creator, onSuccess }) {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-on-surface">Buy Me a Coffee</h3>
-                  <p className="text-sm text-on-surface-variant">Support {creator.name}</p>
+                  <p className="text-sm text-on-surface-variant">Support {actualCreator.name}</p>
                 </div>
               </div>
             </div>
